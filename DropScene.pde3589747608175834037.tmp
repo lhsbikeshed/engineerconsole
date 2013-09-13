@@ -1,0 +1,96 @@
+
+public class DropDisplay implements Display{
+
+  OscP5 p5;
+  
+  long sceneStartTime = 0;
+  
+  PImage instructionImage;
+  PImage patchImage;
+  PImage authImage;
+  PFont font;
+  String authCode = "";
+  long authDisplayTime = 0; //start for auth fail/ok display time
+ 
+  
+  public  int STATE_INST = 0;
+  public  int STATE_PATCHING = 1;
+  public  int STATE_AUTH = 2;
+  int state = STATE_INST;
+  
+  public DropDisplay(OscP5 p5){
+    this.p5 = p5;
+    instructionImage = loadImage("dropscene1.png");
+    patchImage = loadImage("dropscene2.png");
+    authImage = loadImage("dropscene3.png");
+    
+    font =  loadFont("HanzelExtendedNormal-48.vlw");
+    
+  }
+  
+  
+  public void draw(){
+    if(state == STATE_INST){
+      image(instructionImage,0,0);
+      if(sceneStartTime + 5000 < millis()){
+        state = STATE_PATCHING;
+      }
+    } else if (state == STATE_PATCHING){
+      image(patchImage,0,0);
+    } else if (state == STATE_AUTH){
+      image(authImage,0,0);
+      textFont(font,20);
+      text(authCode + "_", 208,348);
+      
+      if(authDisplayTime + 1500 > millis()){
+        fill(255,0,0);
+        textFont(font,40);
+        text("CODE FAIL", 243,448);
+      }
+    }
+    
+    
+      
+    
+  }
+  
+  public void oscMessage(OscMessage theOscMessage){}
+  
+  
+  public void start(){
+    sceneStartTime = millis();
+  }
+  
+  
+  public void stop(){
+  }
+    public void serialEvent(String evt){
+      if(state == STATE_PATCHING){
+        if(evt.equals("connectok") ){
+          //we received an ok from the panel hardware
+          //tell the main game that the test passed and it can enable the escape jump system
+          OscMessage myMessage = new OscMessage("/scene/droppanelrepaired");
+          p5.flush(myMessage, new NetAddress("239.0.0.200", 12000));
+          state = STATE_AUTH;
+        }
+      } else if (state == STATE_AUTH){
+        if(evt.length() == 1){
+          if(authCode.length() < 5){
+            authCode += evt;
+          } else {
+            authCode = "";
+            authDisplayTime = millis();
+          }
+        }
+      }
+      
+      
+    }
+    
+    
+
+  public void keyPressed(){}
+  public void keyReleased(){
+    serialEvent("" + key);
+  }
+}
