@@ -258,9 +258,19 @@ void dealWithSerial(String vals) {
       //switch
       vals = vals.substring(2);
       String[] sw = vals.split(":");
-      String t = "NEWSWITCH:" + sw[0] + ":" + sw[1];
+      if(sw[0].equals("9") ){    //FIX ME - not this switch num
+        OscMessage myMessage = new OscMessage("/control/grapplingHookState");
+        myMessage.add(sw[1]);
+        oscP5.flush(myMessage, new NetAddress(serverIP, 12000));
+        
+        
       
-      currentScreen.serialEvent(t);
+      } else {
+        
+        String t = "NEWSWITCH:" + sw[0] + ":" + sw[1];
+      
+        currentScreen.serialEvent(t);
+      }
     } else {
       //its a dial
       String t = "NEWDIAL:" + vals.substring(1,2) + ":" + vals.substring(3);
@@ -434,6 +444,10 @@ void oscEvent(OscMessage theOscMessage) {
     
   } else if (theOscMessage.addrPattern().startsWith("/system/powerManagement")){
     powerDisplay.oscMessage(theOscMessage);
+    
+    
+  } else if (theOscMessage.checkAddrPattern("/control/grapplingHookState")){
+    
     
   } else {
   
