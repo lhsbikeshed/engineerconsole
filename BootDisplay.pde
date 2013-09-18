@@ -90,6 +90,11 @@ public class BootDisplay implements Display {
         bannerSystem.displayFor(360000);
       }
   
+    } else if (theOscMessage.checkAddrPattern("/system/boot/justFuckingBoot")){
+      //sometimes boots get stuck, this will skip it and power the ship on
+      brokenBoot = false;
+      bannerSystem.cancel();
+      bootCount = 400;
     }
    
   }
