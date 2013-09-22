@@ -259,8 +259,9 @@ void dealWithSerial(String vals) {
       vals = vals.substring(2);
       String[] sw = vals.split(":");
       if(sw[0].equals("9") ){    //FIX ME - not this switch num
+        
         OscMessage myMessage = new OscMessage("/control/grapplingHookState");
-        myMessage.add(sw[1]);
+        myMessage.add(Integer.parseInt(sw[1]));
         oscP5.flush(myMessage, new NetAddress(serverIP, 12000));
         
         
