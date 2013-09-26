@@ -92,8 +92,9 @@ void setup() {
   displayMap.put("selfdestruct", new DestructDisplay());
   displayMap.put("RemoteConnection", new RemoteConnectionDisplay());
   displayMap.put("pwned", new PwnedDisplay());
+  displayMap.put("wormholeStatus", new WormholeDisplay(oscP5, serverIP) );
   
-  currentScreen = displayMap.get("RemoteConnection");
+  currentScreen = displayMap.get("wormholeStatus");
 
 
   bootDisplay = new BootDisplay();

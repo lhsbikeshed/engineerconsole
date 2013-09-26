@@ -35,7 +35,8 @@ public class PwnedDisplay implements Display {
    
   }
 
-  public void serialEvent(String evt){}
+   public void serialEvent(String evt) {}
+
 
   public void keyPressed(){}
   public void keyReleased(){}
