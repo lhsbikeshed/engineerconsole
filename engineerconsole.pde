@@ -476,6 +476,7 @@ public class ShipState{
   public PVector shipVel = new PVector(0, 0, 0);
 
   public int sillinessLevel = 0;
+  public int[] powerLevels;
 
   public ShipState(){};
   

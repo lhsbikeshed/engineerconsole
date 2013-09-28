@@ -15,6 +15,8 @@ public class WormholeDisplay implements Display {
   //osc
   OscP5 p5;
   String serverIP = "";
+  
+  PVect
 
 
   //power man
@@ -27,7 +29,7 @@ public class WormholeDisplay implements Display {
 
   public WormholeDisplay(OscP5 p5, String sIP) {
     font = loadFont("FixedsysTTF-48.vlw");
-    // bgImage = loadImage("bootlogo.png");
+    bgImage = loadImage("wormholeStatus.png");
     serverIP = sIP;
     this.p5 = p5;
     for (int i = 0; i < 4; i++) {
@@ -46,15 +48,16 @@ public class WormholeDisplay implements Display {
   }
 
   public void draw() {
-    //image(bgImage, 0,0,width,height);
     background(0, 0, 0);
+
+    image(bgImage, 0,0,width,height);
     text("WORMHOLES MOTHERFUCKER", 20, 400);
 
     //draw power management bars
     fill(0, 255, 0);
     for (int i = 0; i < 4; i++) {
-      int w = power[i] * 33;
-      rect(984, 421 + i * 80, -w, 60);
+      int w = power[i] * 23;
+      rect(906, 411 + i * 70, -w, 65);
     }
   }
 
