@@ -16,7 +16,7 @@ boolean serialEnabled = false;
 
 //display handling
 Hashtable<String, Display> displayMap = new Hashtable<String, Display>();
-Display currentScreen, powerDisplay;
+Display currentScreen, powerDisplay, wormholeDisplay;
 BannerOverlay bannerSystem = new BannerOverlay();
 
 //boot screen
@@ -83,6 +83,7 @@ void setup() {
   oscP5 = new OscP5(this, 12001);
   
   powerDisplay =  new PowerDisplay(oscP5, serverIP);
+  wormholeDisplay  =  new WormholeDisplay(oscP5, serverIP);
   
   displayMap.put("power", powerDisplay);
   displayMap.put("drop", new DropDisplay(oscP5, serverIP));
@@ -92,7 +93,7 @@ void setup() {
   displayMap.put("selfdestruct", new DestructDisplay());
   displayMap.put("RemoteConnection", new RemoteConnectionDisplay());
   displayMap.put("pwned", new PwnedDisplay());
-  displayMap.put("wormholeStatus", new WormholeDisplay(oscP5, serverIP) );
+  displayMap.put("wormholeStatus", wormholeDisplay );
   
   currentScreen = displayMap.get("wormholeStatus");
 
@@ -446,6 +447,9 @@ void oscEvent(OscMessage theOscMessage) {
     
   } else if (theOscMessage.addrPattern().startsWith("/system/powerManagement")){
     powerDisplay.oscMessage(theOscMessage);
+  } else if(theOscMessage.addrPattern().startsWith("/engineer/wormholeStatus/")){
+    
+    wormholeDisplay.oscMessage(theOscMessage);
     
     
   } else if (theOscMessage.checkAddrPattern("/control/grapplingHookState")){

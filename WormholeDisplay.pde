@@ -16,7 +16,9 @@ public class WormholeDisplay implements Display {
   OscP5 p5;
   String serverIP = "";
   
-  PVect
+  String[] statusStrings = { "Scanning....", "Aperture opening", "WORMHOLE OPEN", "COLLAPSING"};
+  int status = 0;
+  float energyLevel = 0.0f;
 
 
   //power man
@@ -28,7 +30,7 @@ public class WormholeDisplay implements Display {
   float jumpCharge = 0.0f;
 
   public WormholeDisplay(OscP5 p5, String sIP) {
-    font = loadFont("FixedsysTTF-48.vlw");
+    font = loadFont("HanzelExtendedNormal-48.vlw");
     bgImage = loadImage("wormholeStatus.png");
     serverIP = sIP;
     this.p5 = p5;
@@ -52,6 +54,9 @@ public class WormholeDisplay implements Display {
 
     image(bgImage, 0,0,width,height);
     text("WORMHOLES MOTHERFUCKER", 20, 400);
+    textFont(font, 15);
+    text("Status: " + statusStrings[status], 243,291);
+    text("Energy Level: " + energyLevel, 243, 320);
 
     //draw power management bars
     fill(0, 255, 0);
@@ -60,8 +65,24 @@ public class WormholeDisplay implements Display {
       rect(906, 411 + i * 70, -w, 65);
     }
   }
+  
+  void drawWormhole(){
+    pushMatrix();
+    translate(410,380);
+    
+    
+    
+    popMatrix();
+  }
 
   public void oscMessage(OscMessage theOscMessage) {
+      if (theOscMessage.checkAddrPattern("/engineer/wormholeStatus/holeState") ){
+        status = theOscMessage.get(1).intValue();
+        energyLevel = theOscMessage.get(0).floatValue();
+      }
+
+    
+    
   }
 
   public void serialEvent(String evt) {
