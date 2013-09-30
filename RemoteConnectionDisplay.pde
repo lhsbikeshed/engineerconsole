@@ -103,6 +103,8 @@ public class RemoteConnectionDisplay implements Display {
       }
     }
     currentSploit = 9;
+    
+    hackCount = 0;
     connectionProgress = 0;
     curFile = 0;
     displayText = "";
