@@ -119,12 +119,21 @@ public class AirlockDisplay implements Display {
         p5.flush(msg, myRemoteLocation);
         println("Change");
         doneSuccessMessage = true;
+        //turn off airlock dump light
+        setAirlockLightState(false);
       }
         
    
     }
     
     
+  }
+  
+  void setAirlockLightState(boolean state){
+    println("setting airlock light to : " + state);
+    OscMessage msg = new OscMessage("/system/effect/airlockLight");
+    msg.add(state == true ? 1 : 0);
+    p5.flush(msg, myRemoteLocation);
   }
 
   public void oscMessage(OscMessage theOscMessage) {
@@ -158,11 +167,15 @@ public class AirlockDisplay implements Display {
           failedCode = false;
           locked = false;
           stateText = "CODE OK";
+          //turn on the airlock dump light
+          setAirlockLightState(true);
         } 
         else {      
           failedCode = true;
           stateText = "CODE FAILED";
           failTime = millis();
+          //turn off airlock dump light
+          setAirlockLightState(false);
         }
       }
     }
