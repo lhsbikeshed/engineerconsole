@@ -13,9 +13,12 @@ public class BootDisplay implements Display {
   String[] fileNames = {"kernel32.sys", "PilotIOController.sys", "SplineReticulator.so"};
   int nextFail = 100;
   
+  String[] bootText;
+  
   public BootDisplay(){
     font = loadFont("HanzelExtendedNormal-48.vlw");
     bgImage = loadImage("bootlogo.png");
+    bootText = loadStrings("boottext.txt");
   }
   
   
@@ -39,30 +42,22 @@ public class BootDisplay implements Display {
     background(0,0,0);
     
     if(bootCount < 100){
-      textFont(font,10);
+      textFont(font,15);
       fill(0,255,0);
-      String dots = ".";
-      for(int i = 0; i < bootCount / 10; i++){
-        dots += ".";
+      
+      int bootLen= (int)map(bootCount, 0, 100, 0, bootText.length);
+      for(int i = 0; i < bootLen; i++){
+        text(bootText[i], 30, 30 + 20 * i);
       }
-      text("startup " + dots, 30,30);
+      
       bootCount += 10;
     } else {
       fill(0,0,255);
       rect(353, 454, map(bootCount, 100, 400, 0, 330), 30);
       image(bgImage,0,0,width,height);;
-      if(brokenBoot){
-       if( bootCount > nextFail){
-          bannerSystem.setSize(700,300);
-          bannerSystem.setTitle("ERROR 100EF33");
-          bannerSystem.setText("MISSING FILE <" + fileNames[curFile] + "> Please insert rescue disk " + filesToReplace[curFile]);
-          bannerSystem.displayFor(360000);
-       } else {
-         bootCount += 10;
-       }
-      } else {
-        bootCount += 10;
-      }
+      
+      bootCount += 10;
+      
     }
     
   }
