@@ -39,8 +39,8 @@ public class AirlockDisplay implements Display {
 
 
 
-  public AirlockDisplay(OscP5 p5, String sIP) {
-    this.p5 = p5;
+  public AirlockDisplay(OscP5 op5, String sIP) {
+    this.p5 = op5;
     serverIP = sIP;
     myRemoteLocation  = new NetAddress(sIP, 12000);
     bgImage = loadImage("airlockscreen.png");
@@ -108,15 +108,15 @@ public class AirlockDisplay implements Display {
         totalFailure = true;
         OscMessage msg = new OscMessage("/system/transporter/beamAttemptResult");
         msg.add(2);
-        p5.flush(msg, myRemoteLocation);
+        p5.send(msg, myRemoteLocation);
       }
     }
     
     if(greatSuccess){
       if(!doneSuccessMessage){
-        OscMessage msg = new OscMessage("/system/transporter/beamAttemptResult");
-        msg.add(3);
-        p5.flush(msg, myRemoteLocation);
+        //OscMessage msg = new OscMessage("/system/transporter/beamAttemptResult");
+        //msg.add(3);
+        //p5.send(msg, myRemoteLocation);
         println("Change");
         doneSuccessMessage = true;
         //turn off airlock dump light
@@ -133,7 +133,7 @@ public class AirlockDisplay implements Display {
     println("setting airlock light to : " + state);
     OscMessage msg = new OscMessage("/system/effect/airlockLight");
     msg.add(state == true ? 1 : 0);
-    p5.flush(msg, myRemoteLocation);
+    //p5.send(msg, myRemoteLocation);
   }
 
   public void oscMessage(OscMessage theOscMessage) {
@@ -202,6 +202,13 @@ public class AirlockDisplay implements Display {
       if(evtData[1].equals("AIRLOCK") && locked == false){
         greatSuccess = true;
         successTime = millis();
+        if(!doneSuccessMessage){
+          println("send message");
+          OscMessage msg = new OscMessage("/system/transporter/beamAttemptResult");
+          msg.add(3);
+          oscP5.send(msg, myRemoteLocation);
+          
+        }
       }
     }
     

@@ -7,7 +7,7 @@ import java.awt.Point;
 
 
 //CHANGE ME
-boolean testMode = true;
+boolean testMode = false;
 
 
 String serverIP = "127.0.0.1";
@@ -74,8 +74,8 @@ void setup() {
   frameRate(30);
 
   if(serialEnabled){
-    serialPort = new Serial(this, "/dev/ttyUSB0", 9600);
-    panelPort = new Serial(this, "/dev/ttyUSB1", 115200);
+    serialPort = new Serial(this, "COM11", 9600);
+    panelPort = new Serial(this, "COM12", 115200);
   }
   
   noiseImage = loadImage("noise.png");
@@ -95,7 +95,7 @@ void setup() {
   displayMap.put("pwned", new PwnedDisplay());
   displayMap.put("wormholeStatus", wormholeDisplay );
   
-  currentScreen = displayMap.get("wormholeStatus");
+  currentScreen = displayMap.get("power");
 
 
   bootDisplay = new BootDisplay();
@@ -106,7 +106,7 @@ void setup() {
    /*sync to current game screen*/
   OscMessage myMessage = new OscMessage("/game/Hello/EngineerStation");  
   oscP5.send(myMessage, new NetAddress(serverIP, 12000));
-
+  frame.setAlwaysOnTop(true); 
    
 }
 
