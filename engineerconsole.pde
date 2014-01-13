@@ -103,7 +103,7 @@ void setup() {
   displayMap.put("pwned", new PwnedDisplay());
   displayMap.put("wormholeStatus", wormholeDisplay );
 
-  currentScreen = displayMap.get("drop");
+  currentScreen = displayMap.get("power");
 
 
   bootDisplay = new BootDisplay();
