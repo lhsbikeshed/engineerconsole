@@ -187,6 +187,7 @@ public class DropDisplay implements Display{
             authCode += evt;
             if(authCode.equals(currentAuthCode)){
               authResult = true;
+              consoleAudio.playClip("codeOk");
               //tell the main game that auth passed
               OscMessage myMessage = new OscMessage("/scene/drop/droppanelrepaired");
               myMessage.add(2);
@@ -194,6 +195,7 @@ public class DropDisplay implements Display{
               
             } else {
               authResult = false;
+              consoleAudio.playClip("codeFail");
               authCode = "";
             }
             

@@ -82,17 +82,23 @@ public class JamDisplay implements Display {
     resetPuzzle();
   }
   public void stop() {
+    consoleAudio.setToneState(false);
   }
 
   public void draw() {
+    dialA =(int) map(mouseX, 0, width, 0, 12);
+    dialB = (int) map(mouseY, 0, height, 0, 12);
+
+
     image(bgImage, 0, 0, width, height);
     textFont(font, 20);
-   // text("test " + mouseX + ":" + mouseY, mouseX, mouseY);
+    // text("test " + mouseX + ":" + mouseY, mouseX, mouseY);
 
     if (gameState == STATE_SCAN) {
       if (scanStart + 5000 < millis()) {
         gameState = STATE_PLAYING;
         playStart = millis();
+        consoleAudio.setToneState(true);
       } 
       else {
         textFont(font, 30);
@@ -105,12 +111,15 @@ public class JamDisplay implements Display {
         lastChangeTime = millis();
       }
 
+      consoleAudio.setToneValue(  map(dialA, 0, 12, 150, 220), map(dialB, 0, 12, 0.1, 15));
 
 
 
       if (playStart + 35000 < millis()) {
         //failed, beam aboard
         gameState = STATE_FAIL;
+        consoleAudio.setToneState(false);
+
         failStart = millis();
         //also sent a failure OSC message
         OscMessage msg = new OscMessage("/system/jammer/jamresult");
@@ -173,6 +182,8 @@ public class JamDisplay implements Display {
         jamTimer --;
         if (jamTimer <= 0) {
           jamAttempt = false;
+          consoleAudio.setToneState(true);
+
           if (jamSuccess) {
             //skip out were done here
 
@@ -188,13 +199,19 @@ public class JamDisplay implements Display {
             fill(0, 255, 0);
             text("SUCCESS", 439, 426);
             if (!jamMessageDone) {
+              consoleAudio.playClip("codeOk");
               OscMessage msg = new OscMessage("/system/jammer/jamresult");
               msg.add(1);
               p5.flush(msg, myRemoteLocation);
               jamMessageDone = true;
+              // consoleAudio.setToneState(true);
             }
           } 
           else {
+            if (!jamMessageDone) {
+              consoleAudio.playClip("codeFail");
+              jamMessageDone = true;
+            }
             textFont(font, 45);
             fill(255, 0, 0);
             text("FAILED", 439, 426);
@@ -205,6 +222,8 @@ public class JamDisplay implements Display {
     else if (gameState == STATE_FAIL) {
       fill(0, 0, 0, 128);
       rect(0, 0, width, height);
+      consoleAudio.setToneState(false);
+
       if (failStart + 2000 > millis()) {
 
         image(intruderOverlay, 170, 250);
@@ -243,26 +262,26 @@ public class JamDisplay implements Display {
     } 
     else if (v[0].equals("KEY")) {
       if (v[1].equals(";")) {
-        jamAttempt = true;
-        jamTimer = 120;
-        if (dialA - 1 == target[0] && dialB - 1 == target[1]) {
-          jamSuccess = true;
-        } 
-        else {
-          jamSuccess = false;
+        jamAttempt();
         }
-      }
-    } 
-    else if (evt.equals("NEWSWITCH:11:1")) {
-
-      jamAttempt = true;
-      jamTimer = 120;
-      if (dialA - 1 == target[0] && dialB - 1 == target[1]) {
-        jamSuccess = true;
       } 
-      else {
-        jamSuccess = false;
-      }
+    else if (evt.equals("NEWSWITCH:11:1")) {
+      jamAttempt();
+    }
+  }
+  public void jamAttempt() {
+    jamAttempt = true;
+    jamMessageDone = false;
+
+    consoleAudio.setToneState(false);
+    consoleAudio.playClip("jamattempt");
+
+    jamTimer = 120;
+    if (dialA - 1 == target[0] && dialB - 1 == target[1]) {
+      jamSuccess = true;
+    } 
+    else {
+      jamSuccess = false;
     }
   }
 }

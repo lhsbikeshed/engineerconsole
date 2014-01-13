@@ -136,6 +136,7 @@ public class PowerDisplay implements Display {
     else if ( ct > 4) {
       //flash a warning
       reactorFailWarn = true;
+      consoleAudio.playClip("failWarning");
     } 
     else {
       reactorFailWarn = false;

@@ -169,6 +169,7 @@ public class AirlockDisplay implements Display {
           stateText = "CODE OK";
           //turn on the airlock dump light
           setAirlockLightState(true);
+          consoleAudio.playClip("codeOk");
         } 
         else {      
           failedCode = true;
@@ -176,6 +177,7 @@ public class AirlockDisplay implements Display {
           failTime = millis();
           //turn off airlock dump light
           setAirlockLightState(false);
+          consoleAudio.playClip("codeFail");
         }
       }
     }
