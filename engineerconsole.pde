@@ -274,7 +274,7 @@ void dealWithSerial(String vals) {
         currentScreen.serialEvent(t);
       }
     } else if (vals.substring(0, 2).equals("PC")){//probe complete, unmute audio for buttons
-       consoleAdudio.muteBeeps = false;
+       consoleAudio.muteBeeps = false;
     } else {
       //its a dial
       String t = "NEWDIAL:" + vals.substring(1, 2) + ":" + vals.substring(3);

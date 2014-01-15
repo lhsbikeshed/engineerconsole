@@ -36,8 +36,8 @@ public class DropDisplay implements Display{
   public DropDisplay(OscP5 p5, String sIP){
     this.p5 = p5;
     serverIP = sIP;
-    instructionImage = loadImage("dropscene1.png");
-    patchImage = loadImage("dropscene1.png");
+    instructionImage = loadImage("dropnew.png");
+    patchImage = loadImage("dropnew.png");
     authImage = loadImage("dropscene3.png");
     jumpOverlayImage = loadImage("emergencyjump.png");
     jumpEnableOverlay = loadImage("jumpEnableOverlay.png");
@@ -136,11 +136,13 @@ public class DropDisplay implements Display{
       if(curPatch == 1){
         failed = false;
       }
+      consoleAudio.playClip("beepHigh");
       println(curPatch);
     } else if (theOscMessage.checkAddrPattern("/scene/drop/conduitFail")==true) {
       curPatch = -1;
       failed = true;
       failTimer = millis();
+      consoleAudio.playClip("codeFail");
     } else if (theOscMessage.checkAddrPattern("/scene/drop/structuralFailure")==true) {
       structFail = true;
     }
