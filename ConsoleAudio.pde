@@ -5,6 +5,7 @@ public class ConsoleAudio {
   Minim minim;
   Hashtable<String, AudioPlayer> audioList;
 
+  public boolean muteBeeps = false;
   //tone generation
   AudioOutput toneOutput;
   Oscil fm;
@@ -72,7 +73,7 @@ public class ConsoleAudio {
   }
 
   public void randomBeep() {
-    if (!shipState.poweredOn) {
+    if (!shipState.poweredOn || muteBeeps) {
       return;
     }
     int rand = floor(random(beepList.length));

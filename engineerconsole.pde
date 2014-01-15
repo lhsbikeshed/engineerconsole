@@ -273,6 +273,8 @@ void dealWithSerial(String vals) {
 
         currentScreen.serialEvent(t);
       }
+    } else if (vals.substring(0, 2).equals("PC")){//probe complete, unmute audio for buttons
+       consoleAdudio.muteBeeps = false;
     } else {
       //its a dial
       String t = "NEWDIAL:" + vals.substring(1, 2) + ":" + vals.substring(3);
@@ -344,6 +346,8 @@ void probeEngPanel() {
   if (serialEnabled) {
     println("probng");
     panelPort.write('P');
+    //mute the random beeps in console audio and only unmute when reeiving a probe complete message
+    consoleAudio.muteBeeps = true;
   }
 }
 
