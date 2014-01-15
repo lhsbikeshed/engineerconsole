@@ -209,6 +209,7 @@ public class AirlockDisplay implements Display {
           OscMessage msg = new OscMessage("/system/transporter/beamAttemptResult");
           msg.add(3);
           oscP5.send(msg, myRemoteLocation);
+          consoleAudio.playClip("airlockDump", -1.0f);
           
         }
       }

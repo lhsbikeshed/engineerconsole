@@ -86,13 +86,11 @@ public class ConsoleAudio {
     beepList[rand].rewind();
     beepList[rand].play();
   }
-
-/* forces a sound to play even when ship os powered off*/
-  public void playClipForce(String name){
-    
+  
+  public void playClipForce(String name, float pan){
     AudioPlayer c = audioList.get(name);
     if (c != null) {
-      c.setPan(1.0f);
+      c.setPan(pan);
       c.rewind();
       c.play();
     } 
@@ -101,11 +99,24 @@ public class ConsoleAudio {
     }
   }
 
+/* forces a sound to play even when ship os powered off*/
+  public void playClipForce(String name){
+    
+    playClipForce(name, 1.0f);
+  }
+
   public void playClip(String name) {
     if (!shipState.poweredOn) {
       return;
     }
     playClipForce(name);
+  }
+  
+  public void playClip(String name, float pan){
+    if (!shipState.poweredOn) {
+      return;
+    }
+    playClipForce(name,pan);
   }
 }
 

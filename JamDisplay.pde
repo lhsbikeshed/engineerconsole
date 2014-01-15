@@ -126,6 +126,7 @@ public class JamDisplay implements Display {
         OscMessage msg = new OscMessage("/system/jammer/jamresult");
         msg.add(0);
         p5.flush(msg, myRemoteLocation);
+        consoleAudio.playClip("beamIn", -1.0f);
       }
       //draw the graphs
 
@@ -206,6 +207,7 @@ public class JamDisplay implements Display {
               p5.flush(msg, myRemoteLocation);
               jamMessageDone = true;
               // consoleAudio.setToneState(true);
+              consoleAudio.playClip("beamFail", -1.0f);
             }
           } 
           else {
