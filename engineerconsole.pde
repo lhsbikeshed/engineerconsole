@@ -227,18 +227,19 @@ public void keyPressed() {
         bannerSystem.setTitle("!!WARNING!!");
         bannerSystem.setText("Please do not push that button again");
         bannerSystem.displayFor(5000);
+        consoleAudio.playClip("warning1");
         break;
       case 1:
 
         //shut down
         shipState.sillinessLevel = 2;
-
+        consoleAudio.playClip("warning2");
         msg.add(1);
         oscP5.flush(msg, new NetAddress(serverIP, 12000));
         break;
       case 2:
         shipState.sillinessLevel = -1;
-
+        consoleAudio.playClip("warning3");
         msg.add(2);
         oscP5.flush(msg, new NetAddress(serverIP, 12000));
         bannerSystem.setSize(700, 300);
