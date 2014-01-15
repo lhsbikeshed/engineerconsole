@@ -11,7 +11,8 @@ import oscP5.*;
 import netP5.*;
 import java.awt.Point;
 
-
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 //CHANGE ME
 boolean testMode = false;
@@ -79,6 +80,7 @@ void setup() {
   size(1024, 768, P2D);
   noSmooth();
   frameRate(30);
+  hideCursor();
 
   if (serialEnabled) {
     serialPort = new Serial(this, "COM11", 9600);
@@ -278,6 +280,7 @@ void dealWithSerial(String vals) {
     } else {
       //its a dial
       String t = "NEWDIAL:" + vals.substring(1, 2) + ":" + vals.substring(3);
+      
       currentScreen.serialEvent(t);
     }
   } else {
@@ -462,6 +465,14 @@ void mouseClicked() {
   //displayList[currentDisplay].serialEvent("connectok");
 }
 
+
+void hideCursor(){
+  BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+  Cursor blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(
+    cursorImg, new Point(0,0), "blank cursor");
+    frame.setCursor(blankCursor);
+  
+}
 public class ShipState {
 
   public int smartBombsLeft = 6;

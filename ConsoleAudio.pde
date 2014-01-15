@@ -10,6 +10,9 @@ public class ConsoleAudio {
   AudioOutput toneOutput;
   Oscil fm;
   Oscil wave;
+  
+  Oscil dialWave = new Oscil(440, 0.8, Waves.SINE);
+  //AudioOutput dialOutput;
 
   AudioPlayer[] beepList = new AudioPlayer[4];
 
