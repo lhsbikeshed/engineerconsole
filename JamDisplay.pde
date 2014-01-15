@@ -86,8 +86,8 @@ public class JamDisplay implements Display {
   }
 
   public void draw() {
-    dialA =(int) map(mouseX, 0, width, 0, 12);
-    dialB = (int) map(mouseY, 0, height, 0, 12);
+    //dialA =(int) map(mouseX, 0, width, 0, 12);
+    //dialB = (int) map(mouseY, 0, height, 0, 12);
 
 
     image(bgImage, 0, 0, width, height);

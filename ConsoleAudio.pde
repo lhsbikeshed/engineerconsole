@@ -83,11 +83,9 @@ public class ConsoleAudio {
     beepList[rand].play();
   }
 
-
-  public void playClip(String name) {
-    if (!shipState.poweredOn) {
-      return;
-    }
+/* forces a sound to play even when ship os powered off*/
+  public void playClipForce(String name){
+    
     AudioPlayer c = audioList.get(name);
     if (c != null) {
       c.setPan(1.0f);
@@ -97,6 +95,13 @@ public class ConsoleAudio {
     else {
       println("ALERT: tried to play " + name + " but not found");
     }
+  }
+
+  public void playClip(String name) {
+    if (!shipState.poweredOn) {
+      return;
+    }
+    playClipForce(name);
   }
 }
 
