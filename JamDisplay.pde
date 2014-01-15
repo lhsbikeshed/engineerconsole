@@ -62,6 +62,7 @@ public class JamDisplay implements Display {
     gameState = STATE_SCAN;
     jamMessageDone = false;
     jamSuccess = false;
+    jamAttempt = false;
   }
 
   public void newValues() {
