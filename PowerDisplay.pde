@@ -83,14 +83,14 @@ public class PowerDisplay implements Display {
 
 
   public void start() {
-    for (int i = 0; i < 4; i++) {
-      power[i] = 2;
-    }
-    OscMessage msg = new OscMessage("/control/subsystemstate");
-    for (int i = 0; i < 4; i++) {
-      msg.add(power[i] );
-    }
-    p5.flush(msg,  new NetAddress(serverIP, 12000));
+//    for (int i = 0; i < 4; i++) {
+//      power[i] = 2;
+//    }
+//    OscMessage msg = new OscMessage("/control/subsystemstate");
+//    for (int i = 0; i < 4; i++) {
+//      msg.add(power[i] );
+//    }
+//    p5.flush(msg,  new NetAddress(serverIP, 12000));
     for (SubSystem s : subsystemList) {
       s.reset();
     }
@@ -101,14 +101,14 @@ public class PowerDisplay implements Display {
   }
 
   public void stop() {
-    for (int i = 0; i < 4; i++) {
-      power[i] = 2;
-    }
-    OscMessage msg = new OscMessage("/control/subsystemstate");
-    for (int i = 0; i < 4; i++) {
-      msg.add(power[i] );
-    }
-    p5.flush(msg,  new NetAddress(serverIP, 12000));
+//    for (int i = 0; i < 4; i++) {
+//      power[i] = 2;
+//    }
+//    OscMessage msg = new OscMessage("/control/subsystemstate");
+//    for (int i = 0; i < 4; i++) {
+//      msg.add(power[i] );
+//    }
+//    p5.flush(msg,  new NetAddress(serverIP, 12000));
   }
 
   private int countSystemFailures() {

@@ -15,7 +15,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 //CHANGE ME
-boolean testMode = false;
+boolean testMode = true;
 
 
 String serverIP = "127.0.0.1";
@@ -63,6 +63,8 @@ PImage noiseImage;
 
 boolean globalBlinker = false;
 long blinkTime = 0;
+
+long sillinessStartTime = 0;
 
 void setup() {
 
@@ -122,6 +124,9 @@ void setup() {
 }
 
 void draw() {
+  if(shipState.sillinessInProgress && sillinessStartTime + 5000 < millis()){
+    shipState.sillinessInProgress = false;
+  }
   if (blinkTime + 750 < millis()) {
     blinkTime = millis();
     globalBlinker = ! globalBlinker;
@@ -215,12 +220,13 @@ public void keyPressed() {
     currentScreen.serialEvent("KEY:" + key);
   } 
   if (key == '[') {
-    if (shipState.sillinessLevel >= 0 && shipState.poweredOn) {
+    if (shipState.sillinessLevel >= 0 && shipState.poweredOn && shipState.sillinessInProgress == false) {
       OscMessage msg = new OscMessage("/system/reactor/silliness");
+      sillinessStartTime = millis();
       switch(shipState.sillinessLevel) {
       case 0:
         shipState.sillinessLevel = 1;
-
+        shipState.sillinessInProgress = true;
         msg.add(0);
         oscP5.flush(msg, new NetAddress(serverIP, 12000));
         bannerSystem.setSize(700, 300);
@@ -230,7 +236,7 @@ public void keyPressed() {
         consoleAudio.playClip("warning1");
         break;
       case 1:
-
+        shipState.sillinessInProgress = true;
         //shut down
         shipState.sillinessLevel = 2;
         consoleAudio.playClip("warning2");
@@ -238,6 +244,7 @@ public void keyPressed() {
         oscP5.flush(msg, new NetAddress(serverIP, 12000));
         break;
       case 2:
+        shipState.sillinessInProgress = true;
         shipState.sillinessLevel = -1;
         consoleAudio.playClip("warning3");
         msg.add(2);
@@ -487,6 +494,7 @@ public class ShipState {
   public PVector shipVel = new PVector(0, 0, 0);
 
   public int sillinessLevel = 0;
+  public boolean sillinessInProgress = false;
   public int[] powerLevels;
 
   public ShipState() {

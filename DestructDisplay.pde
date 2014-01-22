@@ -44,6 +44,7 @@ public class DestructDisplay implements Display {
   public void oscMessage(OscMessage msg){
     if(msg.checkAddrPattern("/system/reactor/overloadstate")){
       time = msg.get(0).intValue();
+      if(time < 0) time = 0;
     }
   }
 
