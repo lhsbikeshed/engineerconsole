@@ -438,6 +438,7 @@ void oscEvent(OscMessage theOscMessage) {
     } 
     catch(Exception e) {
       println("no display found for " + changeTo);
+      e.printStackTrace();
       changeDisplay(displayMap.get("power"));
     }
   } else if (theOscMessage.checkAddrPattern("/clientscreen/showBanner") ) {
