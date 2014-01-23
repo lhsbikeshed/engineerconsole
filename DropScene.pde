@@ -104,7 +104,12 @@ public class DropDisplay implements Display {
           }
         } 
         else {
-          fill(120, 0, 0);          //not connected
+          if(i == currentCable){
+              int c = (int)map(sin(millis() / 100.0f), -1.0f, 1.0f, 0, 255);  
+            fill(c,c,0);
+          } else {
+            fill(120, 0, 0);          //not connected
+          }
         }
         rect(438, 301 + 88 * i, 174, 62);
       }

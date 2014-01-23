@@ -15,7 +15,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 //CHANGE ME
-boolean testMode = true;
+boolean testMode = false;
 
 
 String serverIP = "127.0.0.1";
