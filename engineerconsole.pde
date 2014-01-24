@@ -15,7 +15,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 //CHANGE ME
-boolean testMode = false;
+boolean testMode = true;
 
 
 String serverIP = "127.0.0.1";
@@ -82,7 +82,9 @@ void setup() {
   size(1024, 768, P2D);
   noSmooth();
   frameRate(30);
-  hideCursor();
+  if(!testMode){
+    hideCursor();
+  }
 
   if (serialEnabled) {
     serialPort = new Serial(this, "COM11", 9600);
@@ -470,8 +472,10 @@ void oscEvent(OscMessage theOscMessage) {
 }
 
 void mouseClicked() {
-  println(mouseX + ":" + mouseY);
-  //displayList[currentDisplay].serialEvent("connectok");
+  //println(mouseX + ":" + mouseY);
+  if(currentScreen == powerDisplay){
+    ((PowerDisplay)currentScreen).mouseClick(mouseX, mouseY);
+  }
 }
 
 

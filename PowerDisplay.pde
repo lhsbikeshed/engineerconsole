@@ -23,18 +23,19 @@ public class PowerDisplay implements Display {
 
 
   //subsystem stuff   
-  SubSystem[] subsystemList = new SubSystem[13];
-  Hashtable<String, SubSystem> switchToSystemMap = new Hashtable<String, SubSystem>();
-  //ArrayList<SubSystem> failureList = new ArrayList<SubSystem>();
+  SubSystem[] subsystemList = new SubSystem[13];        //list of subsystem switches
+  Hashtable<String, SubSystem> switchToSystemMap = new Hashtable<String, SubSystem>();    //map strings from serial port to subsystems
+  ArrayList<int[]> systemGroupList = new ArrayList<int[]>();    //list of subsystem groups, if all things in a group are failed then we slowy break the reactor. Indexes into subsystemList
   int[] analogVals = new int[4];  //analog vals from arduino
   long lastFailureTime = 0;
   long nextFailureTime = 3000;
+  int reactorHealth = 1000;
 
 
   public PowerDisplay(OscP5 p5, String sIP) {
     this.p5 = p5;
     serverIP = sIP;
-   // myRemoteLocation  = new NetAddress(sIP, 12000);
+    // myRemoteLocation  = new NetAddress(sIP, 12000);
     bgImage = loadImage("powerman2.png");
     hullStateImage = loadImage("hulldamageoverlay.png");
     reactorFailOverlay = loadImage("reactorFailOverlay.png");
@@ -45,19 +46,32 @@ public class PowerDisplay implements Display {
 
     //configure subsystems
     subsystemList[0] = new FuelFlowRateSystem("Deuterium", new PVector(10, 91), loadImage("icons/deuterium.png"));
-    switchToSystemMap.put("NEWDIAL:2", subsystemList[0]);
+    switchToSystemMap.put("NEWDIAL:2", subsystemList[0]);    
     subsystemList[1] = new FuelFlowRateSystem("Tritium", new PVector(368, 91), loadImage("icons/tritium.png"));
     switchToSystemMap.put("NEWDIAL:3", subsystemList[1]);
+    systemGroupList.add( new int[] { 
+      0, 1
+    }
+    );    
+
     subsystemList[2] = new ModeratorCoilSystem("Moderator Rod 1", new PVector(405, 172), loadImage("icons/mod1.png"));
     switchToSystemMap.put("NEWDIAL:0", subsystemList[2]);
     subsystemList[3] = new ModeratorCoilSystem("Moderator Rod 2", new PVector(396, 402), loadImage("icons/mod2.png"));
     switchToSystemMap.put("NEWDIAL:1", subsystemList[3]);
+    systemGroupList.add( new int[] { 
+      2, 3
+    }
+    );
 
     //field coils
     subsystemList[4] = new CoilSubSystem("Field Coil 1", new PVector(157, 205), loadImage("icons/coil1.png"));
     switchToSystemMap.put("NEWSWITCH:0", subsystemList[4]);
     subsystemList[5] = new CoilSubSystem("Field Coil 2", new PVector(437, 205), loadImage("icons/coil2.png"));
     switchToSystemMap.put("NEWSWITCH:2", subsystemList[5]);
+    systemGroupList.add( new int[] { 
+      4, 5
+    }
+    );
 
     //coolant valves
     subsystemList[6] = new OnOffSystem("Coolant Valve 1", new PVector(52, 350), loadImage("icons/cool1.png"));
@@ -66,6 +80,10 @@ public class PowerDisplay implements Display {
     switchToSystemMap.put("NEWSWITCH:6", subsystemList[7]);
     subsystemList[8] = new OnOffSystem("Coolant Valve 3", new PVector(133, 350), loadImage("icons/cool3.png"));
     switchToSystemMap.put("NEWSWITCH:8", subsystemList[8]);
+    systemGroupList.add( new int[] { 
+      6, 7, 8
+    }
+    );
     //coolant mixer
     subsystemList[9] = new OnOffSystem("Coolant mixer", new PVector(73, 390), loadImage("icons/mixer.png"));
     switchToSystemMap.put("NEWSWITCH:10", subsystemList[9]);
@@ -79,18 +97,22 @@ public class PowerDisplay implements Display {
     switchToSystemMap.put("NEWSWITCH:1", subsystemList[11]);
     subsystemList[12] = new OnOffSystem("Turbine #2", new PVector(324, 525), loadImage("icons/turbine.png"));
     switchToSystemMap.put("NEWSWITCH:3", subsystemList[12]);
+    systemGroupList.add( new int[] { 
+      11, 12
+    }
+    );
   }
 
 
   public void start() {
-//    for (int i = 0; i < 4; i++) {
-//      power[i] = 2;
-//    }
-//    OscMessage msg = new OscMessage("/control/subsystemstate");
-//    for (int i = 0; i < 4; i++) {
-//      msg.add(power[i] );
-//    }
-//    p5.flush(msg,  new NetAddress(serverIP, 12000));
+    //    for (int i = 0; i < 4; i++) {
+    //      power[i] = 2;
+    //    }
+    //    OscMessage msg = new OscMessage("/control/subsystemstate");
+    //    for (int i = 0; i < 4; i++) {
+    //      msg.add(power[i] );
+    //    }
+    //    p5.flush(msg,  new NetAddress(serverIP, 12000));
     for (SubSystem s : subsystemList) {
       s.reset();
     }
@@ -98,17 +120,18 @@ public class PowerDisplay implements Display {
     probeEngPanel();
     lastFailureTime = millis();
     reactorFailWarn = false;
+    reactorHealth = 1000;
   }
 
   public void stop() {
-//    for (int i = 0; i < 4; i++) {
-//      power[i] = 2;
-//    }
-//    OscMessage msg = new OscMessage("/control/subsystemstate");
-//    for (int i = 0; i < 4; i++) {
-//      msg.add(power[i] );
-//    }
-//    p5.flush(msg,  new NetAddress(serverIP, 12000));
+    //    for (int i = 0; i < 4; i++) {
+    //      power[i] = 2;
+    //    }
+    //    OscMessage msg = new OscMessage("/control/subsystemstate");
+    //    for (int i = 0; i < 4; i++) {
+    //      msg.add(power[i] );
+    //    }
+    //    p5.flush(msg,  new NetAddress(serverIP, 12000));
   }
 
   private int countSystemFailures() {
@@ -121,26 +144,36 @@ public class PowerDisplay implements Display {
     return ct;
   }
 
-  private void addFailure() {
-    int ct = countSystemFailures();
-    if (ct > 7) {
-      //we have a reactor failure!
-      println("FAUL");
-      OscMessage msg = new OscMessage("/system/reactor/fail");
-      p5.flush(msg,  new NetAddress(serverIP, 12000));
-      for (SubSystem s : subsystemList) {
-        s.reset();
-      }
-      probeEngPanel();
-    } 
-    else if ( ct > 4) {
-      //flash a warning
-      reactorFailWarn = true;
-      consoleAudio.playClip("failWarning");
-    } 
-    else {
-      reactorFailWarn = false;
+  private void failReactor() {
+    println("FAILED ");
+    OscMessage msg = new OscMessage("/system/reactor/fail");
+    p5.flush(msg, new NetAddress(serverIP, 12000));
+    for (SubSystem s : subsystemList) {
+      s.reset();
     }
+    probeEngPanel();
+  }
+
+  private void addFailure() {
+    //    int ct = countSystemFailures();
+    //    if (ct > 7) {
+    //      //we have a reactor failure!
+    //      println("FAUL");
+    //      OscMessage msg = new OscMessage("/system/reactor/fail");
+    //      p5.flush(msg, new NetAddress(serverIP, 12000));
+    //      for (SubSystem s : subsystemList) {
+    //        s.reset();
+    //      }
+    //      probeEngPanel();
+    //    } 
+    ////    else if ( ct > 4) {
+    ////      //flash a warning
+    ////      reactorFailWarn = true;
+    ////      consoleAudio.playClip("failWarning");
+    ////    } 
+    ////    else {
+    ////      reactorFailWarn = false;
+    ////    }
 
     ArrayList<SubSystem> notFailedList = new ArrayList<SubSystem>();
     for (SubSystem s : subsystemList) {
@@ -163,10 +196,12 @@ public class PowerDisplay implements Display {
     //update everyone with the current fail count
     OscMessage msg = new OscMessage("/system/powerManagement/failureCount");   
     msg.add( countSystemFailures() );
-    p5.flush(msg,  new NetAddress(serverIP, 12000));
+    p5.flush(msg, new NetAddress(serverIP, 12000));
   }
 
   public void draw() {
+
+    
 
 
     if (lastFailureTime + nextFailureTime < millis() && failureState) {
@@ -181,8 +216,56 @@ public class PowerDisplay implements Display {
       updateFailCounts();
     }
 
+    //calculate the reactor health changes
+    int reactorDelta = 5;
+    for (int[] sl : systemGroupList) {
+      boolean groupFail = true;
+      for (int i = 0; i < sl.length; i++) {
+        groupFail &= subsystemList[ sl[i] ].isFailed();
+      }
+      if (groupFail) {
+        reactorDelta -= 3;
+      }
+    }
+
+    //does this addition take us under 20% reactor health?
+    if (reactorHealth > 200 && reactorHealth + reactorDelta <= 200) {
+      reactorFailWarn = true;
+      consoleAudio.playClip("failWarning");
+    } 
+    else if(reactorHealth > 200){
+      reactorFailWarn = false;
+    }
+
+    reactorHealth += reactorDelta;
+    if (reactorHealth >= 1000 ) { 
+      reactorHealth = 1000;
+    } 
+    ;
+    if (reactorHealth <= 0) {
+      reactorHealth = 0;
+      failReactor();
+    };
+
+
+    //draw a reactor flasher
+    int c = (int)map( sin( millis() / (1100 - reactorHealth) ), -1.0f, 1.0f, 0, 255);
+    if(reactorHealth > 20){
+      fill(0,0,c);
+    } else {
+      fill(c,0,0);
+    }
+    rect(238,199,455,200);
 
     image(bgImage, 0, 0, width, height);
+    //draw reactor health
+    fill(255);
+    textFont(font, 15);
+    text("REACTOR POWER", 267, 296);
+    text(reactorHealth / 10, 348, 310);
+    text(reactorDelta, 248, 340);
+
+
     //draw hull damage
     tint( (int)map(hullState, 0, 100, 255, 0), (int)map(hullState, 0, 100, 0, 255), 0);
     image(hullStateImage, 29, 470);
@@ -221,7 +304,7 @@ public class PowerDisplay implements Display {
 
     if (power[1] == 3) {
       fill(255, 255, 255);
-      textFont(font,15);
+      textFont(font, 15);
       text("Repairing..", 72, 611);
     }
 
@@ -251,7 +334,7 @@ public class PowerDisplay implements Display {
         for (int i = 0; i < 4; i++) {
           msg.add(power[i] );
         }
-        p5.flush(msg,  new NetAddress(serverIP, 12000));
+        p5.flush(msg, new NetAddress(serverIP, 12000));
       }
     } 
     else if (slot == 5) {
@@ -278,12 +361,25 @@ public class PowerDisplay implements Display {
         addFailure();
       }
       println("Lstrike");
-    }else if (theOscMessage.checkAddrPattern("/system/powerManagement/failureSpeed")) {
+    }
+    else if (theOscMessage.checkAddrPattern("/system/powerManagement/failureSpeed")) {
       difficulty = theOscMessage.get(0).intValue();
       println("diff changed " + difficulty);
     }
-    
-    
+  }
+
+  public void mouseClick(int x, int y) {
+    println("mx: " + x + " my: " + y);
+    for (SubSystem s : subsystemList) {
+      if (x > s.pos.x && x < s.pos.x + s.img.width) {
+        if (y > s.pos.y && y < s.pos.y + s.img.height) {
+          println(s.name);
+          s.toggleState();
+          consoleAudio.randomBeep();
+          break;
+        }
+      }
+    }
   }
 
 
@@ -358,7 +454,9 @@ public abstract class SubSystem {
     this.pos = pos;
   }
 
-
+  public void toggleState() {
+    setState(1 - currentState);
+  }
 
   public void setStateNames(String[] names) {
     stateNames = names;
@@ -412,6 +510,11 @@ public class FuelFlowRateSystem extends SubSystem {
     super(name, pos, p);
   }
 
+  public void toggleState() {
+    if (isFailed()) {
+      currentState = targetState;
+    }
+  }
 
   public void createFailure() {
     int newState = (int)random(999);    
@@ -472,6 +575,11 @@ public class ModeratorCoilSystem extends SubSystem {
     super(name, pos, p);
   }
 
+  public void toggleState() {
+    if (isFailed()) {
+      currentState = targetState;
+    }
+  }
 
   public void createFailure() {
     int newState = (int)random(999);    
@@ -548,6 +656,11 @@ public class CoilSubSystem extends SubSystem {
       text("B", pos.x + 50, pos.y + 65);
     }
   }
+  public void toggleState() {
+    if (isFailed()) {
+      currentState = targetState;
+    }
+  }
 
 
   public String getPuzzleString() {
@@ -576,6 +689,12 @@ public class MultiValueSystem extends SubSystem {
       targetState = ra;
       ra = floor(random(maxVals));
     }
+  }
+
+  public void toggleState() {
+
+    currentState ++;
+    currentState %= maxVals;
   }
 
   public String getPuzzleString() {
