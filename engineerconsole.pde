@@ -24,7 +24,7 @@ boolean serialEnabled = false;
 
 //display handling
 Hashtable<String, Display> displayMap = new Hashtable<String, Display>();
-Display currentScreen, powerDisplay, wormholeDisplay;
+Display currentScreen, powerDisplay, wormholeDisplay, jamDisplay;
 BannerOverlay bannerSystem = new BannerOverlay();
 
 //boot screen
@@ -97,11 +97,11 @@ void setup() {
 
   powerDisplay =  new PowerDisplay(oscP5, serverIP);
   wormholeDisplay  =  new WormholeDisplay(oscP5, serverIP);
-
+  jamDisplay = new JamDisplay(oscP5, serverIP);
   displayMap.put("power", powerDisplay);
   displayMap.put("drop", new DropDisplay(oscP5, serverIP));
   displayMap.put("hyperspace", new HyperSpaceDisplay(oscP5, serverIP));
-  displayMap.put("jamming", new JamDisplay(oscP5, serverIP));
+  displayMap.put("jamming", jamDisplay);
   displayMap.put("airlockdump", new AirlockDisplay(oscP5, serverIP));
   displayMap.put("selfdestruct", new DestructDisplay());
   displayMap.put("RemoteConnection", new RemoteConnectionDisplay());
@@ -463,12 +463,16 @@ void oscEvent(OscMessage theOscMessage) {
       };
       println(disks);
     bootDisplay.setDisks(disks);
+    
+    /* ---------next section is for routing general display messages to their right screens */
   } else if (theOscMessage.addrPattern().startsWith("/system/powerManagement")) {
     powerDisplay.oscMessage(theOscMessage);
   } else if (theOscMessage.addrPattern().startsWith("/engineer/wormholeStatus/")) {
 
     wormholeDisplay.oscMessage(theOscMessage);
-  } else if (theOscMessage.checkAddrPattern("/control/grapplingHookState")) {
+  } else if (theOscMessage.addrPattern().startsWith("/system/jammer/")) {
+   
+    jamDisplay.oscMessage(theOscMessage);
   } else {
 
     currentScreen.oscMessage(theOscMessage);

@@ -28,6 +28,8 @@ public class JamDisplay implements Display {
   int lastChangeTime = 0;
   int newValueTime = 0; //time that we created new values for the graph, used to smoothly change the graph
   int attempts = 3;
+  
+  int nextChangeTime = 4500;  //time between changes of the graph
 
   int dialA = 0;
   int dialB = 0;
@@ -107,7 +109,7 @@ public class JamDisplay implements Display {
       }
     } 
     else if (gameState == STATE_PLAYING) {
-      if (lastChangeTime + 4500 < millis()) {
+      if (lastChangeTime + nextChangeTime < millis()) {
         newValues();
         lastChangeTime = millis();
       }
@@ -138,9 +140,9 @@ public class JamDisplay implements Display {
 
         if (!jamAttempt) {
 
-          if (newValueTime + 1000 > millis()) {
-            graphData[0][i] = -(int)lerp(prevData[0][i], targetData[0][i], map(millis() - newValueTime, 0, 1000, 0, 1.0));
-            graphData[1][i] = -(int)lerp(prevData[1][i], targetData[1][i], map(millis() - newValueTime, 0, 1000, 0, 1.0));
+          if (newValueTime + 500 > millis()) {
+            graphData[0][i] = -(int)lerp(prevData[0][i], targetData[0][i], map(millis() - newValueTime, 0, 500, 0, 1.0));
+            graphData[1][i] = -(int)lerp(prevData[1][i], targetData[1][i], map(millis() - newValueTime, 0, 500, 0, 1.0));
 
             graphHeightA = graphData[0][i] + (int)map(sin((millis() + i*100) / 100.0f), -1.0, 1.0, -3.0, 3.0);
             graphHeightB = graphData[1][i] + (int)map(sin((millis() + i*100) / 100.0f), -1.0, 1.0, -3.0, 3.0);
@@ -239,6 +241,13 @@ public class JamDisplay implements Display {
   }
 
   public void oscMessage(OscMessage theOscMessage) {
+    
+    if(theOscMessage.checkAddrPattern("/system/jammer/setDifficulty")){
+      int d = theOscMessage.get(0).intValue();
+      if(d >= 1 && d <= 10){
+        nextChangeTime = (7 - (1 +  d / 2)) * 1000;
+      }
+    }
   }
   public void keyPressed() {
   }
