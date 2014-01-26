@@ -393,6 +393,7 @@ void oscEvent(OscMessage theOscMessage) {
         changeDisplay(bootDisplay);
       }
     }
+    currentScreen.oscMessage(theOscMessage);
   } else if (theOscMessage.checkAddrPattern("/scene/youaredead") == true) {
     //oh noes we died
     shipState.areWeDead = true;
@@ -428,6 +429,9 @@ void oscEvent(OscMessage theOscMessage) {
   } else if (theOscMessage.checkAddrPattern("/ship/damage")==true) {
 
     damageTimer = millis();
+    if(currentScreen == powerDisplay){
+      powerDisplay.oscMessage(theOscMessage);
+    }
   } else if ( theOscMessage.checkAddrPattern("/clientscreen/EngineerStation/changeTo") ) {
     if (!shipState.poweredOn) { 
       return;

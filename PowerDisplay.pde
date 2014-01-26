@@ -20,6 +20,7 @@ public class PowerDisplay implements Display {
   boolean failureState = true;
   int lastFailureCount = 0;
   int difficulty  = 1; //1 - 10
+  int maxReactorHealth = 2500;
 
 
   //subsystem stuff   
@@ -29,7 +30,7 @@ public class PowerDisplay implements Display {
   int[] analogVals = new int[4];  //analog vals from arduino
   long lastFailureTime = 0;
   long nextFailureTime = 3000;
-  int reactorHealth = 1000;
+  int reactorHealth = maxReactorHealth;
 
 
   public PowerDisplay(OscP5 p5, String sIP) {
@@ -104,15 +105,12 @@ public class PowerDisplay implements Display {
   }
 
 
+  /* on screen start:
+   * reset all of the subsystems
+   * probe the panel hardware for current switch states
+   * reset timers for failure and healht
+   */
   public void start() {
-    //    for (int i = 0; i < 4; i++) {
-    //      power[i] = 2;
-    //    }
-    //    OscMessage msg = new OscMessage("/control/subsystemstate");
-    //    for (int i = 0; i < 4; i++) {
-    //      msg.add(power[i] );
-    //    }
-    //    p5.flush(msg,  new NetAddress(serverIP, 12000));
     for (SubSystem s : subsystemList) {
       s.reset();
     }
@@ -120,18 +118,10 @@ public class PowerDisplay implements Display {
     probeEngPanel();
     lastFailureTime = millis();
     reactorFailWarn = false;
-    reactorHealth = 1000;
+    reactorHealth = maxReactorHealth;
   }
 
   public void stop() {
-    //    for (int i = 0; i < 4; i++) {
-    //      power[i] = 2;
-    //    }
-    //    OscMessage msg = new OscMessage("/control/subsystemstate");
-    //    for (int i = 0; i < 4; i++) {
-    //      msg.add(power[i] );
-    //    }
-    //    p5.flush(msg,  new NetAddress(serverIP, 12000));
   }
 
   private int countSystemFailures() {
@@ -175,20 +165,27 @@ public class PowerDisplay implements Display {
     ////      reactorFailWarn = false;
     ////    }
 
-    ArrayList<SubSystem> notFailedList = new ArrayList<SubSystem>();
-    for (SubSystem s : subsystemList) {
-      if (!s.isFailed()) {
-        notFailedList.add(s);
-      }
-    }
+    //find everything that isnt failed or broken, then fail it
+    //    ArrayList<SubSystem> notFailedList = new ArrayList<SubSystem>();
+    //    for (SubSystem s : subsystemList) {
+    //      if (!s.isFailed() && !s.isBroken()) {
+    //        notFailedList.add(s);
+    //      }
+    //    }
+    //
+    //    int rand =(int) floor(random(notFailedList.size()));
+    //    if (rand >= 0 && rand < notFailedList.size()) {
+    //      SubSystem s = notFailedList.get(rand);
+    //      s.createFailure();
+    //    } 
+    //    else {
+    //      //oh fuck EVERYTHING FAILED
+    //    }
 
-    int rand =(int) floor(random(notFailedList.size()));
-    if (rand >= 0 && rand < notFailedList.size()) {
-      SubSystem s = notFailedList.get(rand);
+    //find a random system that isnt failed or broken
+    SubSystem s = getRandomSystem(true, true);
+    if (s != null) {
       s.createFailure();
-    } 
-    else {
-      //oh fuck EVERYTHING FAILED
     }
   }
 
@@ -200,10 +197,6 @@ public class PowerDisplay implements Display {
   }
 
   public void draw() {
-
-    
-
-
     if (lastFailureTime + nextFailureTime < millis() && failureState) {
       lastFailureTime = millis();
       //nextFailureTime = 5000 + (long)random(3000);
@@ -221,7 +214,8 @@ public class PowerDisplay implements Display {
     for (int[] sl : systemGroupList) {
       boolean groupFail = true;
       for (int i = 0; i < sl.length; i++) {
-        groupFail &= subsystemList[ sl[i] ].isFailed();
+        groupFail &= (subsystemList[ sl[i] ].isFailed() |  subsystemList[ sl[i] ].isBroken());
+        //groupFail &= subsystemList[ sl[i] ].isBroken();
       }
       if (groupFail) {
         reactorDelta -= 3;
@@ -229,17 +223,18 @@ public class PowerDisplay implements Display {
     }
 
     //does this addition take us under 20% reactor health?
-    if (reactorHealth > 200 && reactorHealth + reactorDelta <= 200) {
+    int threshHold = (int)(maxReactorHealth * 0.2f);
+    if (reactorHealth > threshHold && reactorHealth + reactorDelta <= threshHold) {
       reactorFailWarn = true;
       consoleAudio.playClip("failWarning");
     } 
-    else if(reactorHealth > 200){
+    else if (reactorHealth > threshHold) {
       reactorFailWarn = false;
     }
 
     reactorHealth += reactorDelta;
-    if (reactorHealth >= 1000 ) { 
-      reactorHealth = 1000;
+    if (reactorHealth >= maxReactorHealth ) { 
+      reactorHealth = maxReactorHealth;
     } 
     ;
     if (reactorHealth <= 0) {
@@ -247,28 +242,32 @@ public class PowerDisplay implements Display {
       failReactor();
     };
 
-
+    noStroke();
     //draw a reactor flasher
-    int c = (int)map( sin( millis() / (1100 - reactorHealth) ), -1.0f, 1.0f, 0, 255);
-    if(reactorHealth > 20){
-      fill(0,0,c);
-    } else {
-      fill(c,0,0);
+    int num = height / 20;
+    for (int i = 0; i < num; i++) {
+      int c = (int)map( sin( millis() / 200.0f  - i/2.0f), -1.0f, 1.0f, 0, 255);
+      if (reactorHealth > threshHold) {
+        fill(0, 0, c);
+      } 
+      else {
+        fill(c, 0, 0);
+      }
+      rect(0, i * 20, width, 20);
     }
-    rect(238,199,455,200);
 
     image(bgImage, 0, 0, width, height);
     //draw reactor health
     fill(255);
     textFont(font, 15);
     text("REACTOR POWER", 267, 296);
-    text(reactorHealth / 10, 348, 310);
-    text(reactorDelta, 248, 340);
+    text((int)map(reactorHealth, 0, maxReactorHealth, 0, 100), 348, 310);
+    //text(reactorDelta, 248, 340);
 
 
     //draw hull damage
     tint( (int)map(hullState, 0, 100, 255, 0), (int)map(hullState, 0, 100, 0, 255), 0);
-    image(hullStateImage, 29, 470);
+    image(hullStateImage, 29, 568);
     noTint();
 
 
@@ -278,14 +277,14 @@ public class PowerDisplay implements Display {
       rect(884, 365 + i * 80, -w, 60);
     }
 
+    textFont(font, 15);
+    text((int)hullState  + "%", 178, 750);
     textFont(font, 12);
-    text((int)hullState  + "%", 179, 653);
-
     fill( (int)map(oxygenLevel, 0, 100, 255, 0), (int)map(oxygenLevel, 0, 100, 0, 255), 0);  
     text((int)oxygenLevel  + "%", 692, 662);
 
     fill( (int)map(jumpCharge, 0, 100, 255, 0), (int)map(jumpCharge, 0, 100, 0, 255), 0);    
-    text((int)jumpCharge  + "%", 178, 699);
+    text((int)jumpCharge  + "%", 652, 714);
 
 
 
@@ -293,6 +292,9 @@ public class PowerDisplay implements Display {
     int baseY = 85; 
     textFont(font, 12);   
     for (SubSystem s : subsystemList) {
+      if (power[1] == 3) {
+        s.doRepairs();
+      }
       s.draw();
       textFont(font, 12);  
       if (s.isFailed()) {
@@ -311,6 +313,78 @@ public class PowerDisplay implements Display {
 
     if (reactorFailWarn && globalBlinker) {
       image(reactorFailOverlay, 207, 631);
+    }
+  }
+
+  /* pick a random system with either failed or broken ones filtered out */
+  private SubSystem getRandomSystem(boolean filterWrong, boolean filterBroken) {
+    ArrayList<SubSystem> notFailedList = new ArrayList<SubSystem>();
+    for (SubSystem s : subsystemList) {
+      boolean filtered = false;
+      if (filterWrong && s.isFailed()) {
+        filtered = true;
+      }
+      if (filterBroken && s.isBroken()) {
+        filtered = true;
+      }
+
+      if (!filtered) {
+        notFailedList.add(s);
+      }
+    }
+
+    int rand =(int) floor(random(notFailedList.size()));
+    if (rand >= 0 && rand < notFailedList.size()) {
+      SubSystem s = notFailedList.get(rand);
+      return s;
+    } 
+    else {
+      return null;
+    }
+  }
+
+  /* find a non damaged reactor element, if damaging it causes the entire group to be broken then dont
+   * as when the ship restarts it'll still be broken and kill the ship
+   */
+  private void damageSomeShit() {
+
+    SubSystem s = getRandomSystem(false, true);
+
+    //if this is part of a group and would cause the group to entirely be damaged then dont damage it
+    //its unfair:p
+
+    //find out which group were in
+    int[] gList = null;
+    for (int[] g : systemGroupList) {
+      boolean found = false;
+      for (int i = 0; i < g.length; i++) {
+        if (subsystemList[ g[i] ] == s) {
+          found = true;
+          gList = g;
+          break;  //we found the group containing this
+        }
+      }
+      if (found) break;
+    }
+
+    // we got a group, now lets see if failing this would cause the entire group to be failed
+    if (gList != null) {
+      int brokenCount = 0;
+      for (int i = 0; i < gList.length; i++) {
+        if (subsystemList[ gList[i] ].isBroken()) brokenCount++;
+      } 
+      //if(brokenCount + 1 < gList.length){
+      s.smash();
+      consoleAudio.playClip("systemDamage");
+
+      // } else {
+      //  println("cant break " + s.name);
+      // }
+    } 
+    else {
+      //this isnt part of a group, smash it in!
+      s.smash();
+      consoleAudio.playClip("systemDamage");
     }
   }
 
@@ -365,6 +439,23 @@ public class PowerDisplay implements Display {
     else if (theOscMessage.checkAddrPattern("/system/powerManagement/failureSpeed")) {
       difficulty = theOscMessage.get(0).intValue();
       println("diff changed " + difficulty);
+    } 
+    else if (theOscMessage.checkAddrPattern("/ship/damage")==true) {
+      float damage = theOscMessage.get(0).floatValue();
+      if (damage >= 9.0f) {
+        damageSomeShit();
+      }
+    } 
+    else if (theOscMessage.checkAddrPattern("/system/reactor/stateUpdate")) {  //qhen reactor starts set the health back to 1000
+
+      int state = theOscMessage.get(0).intValue();
+      if (state == 0) {
+        //
+        reactorHealth = 0;
+      } 
+      else {
+        reactorHealth = maxReactorHealth;
+      }
     }
   }
 
@@ -445,6 +536,10 @@ public abstract class SubSystem {
   protected boolean isBlinking = false;
   protected long blinkStart = 0;
   protected PImage img;
+  //protected boolean isBroken = false;
+  protected int maxHealth = 100;
+  protected int health = maxHealth;
+
 
   protected boolean firstValueSet = true;
 
@@ -455,6 +550,7 @@ public abstract class SubSystem {
   }
 
   public void toggleState() {
+    if (isBroken()) return;
     setState(1 - currentState);
   }
 
@@ -466,7 +562,18 @@ public abstract class SubSystem {
     return currentState != targetState;
   }
 
+  public boolean isBroken() {
+    return health < maxHealth;
+  }
+
+  public void smash() {
+    health = 0;
+    //isBroken = true;
+    createFailure();
+  }
+
   public void setState(int state) {
+    if (isBroken()) return;
     currentState = state;
     if (firstValueSet == true) {
       firstValueSet = false;
@@ -477,6 +584,17 @@ public abstract class SubSystem {
   public void reset() {
     firstValueSet = true;
     currentState = targetState;
+    health = maxHealth;
+  }
+
+  public void doRepairs() {
+    // deal with repairs
+    if (health < maxHealth) {
+      health += random(3);
+      if (health >= maxHealth) {
+        health = maxHealth;
+      }
+    }
   }
 
   public abstract String getPuzzleString();  //get the instruction that the user sees for this system
@@ -486,18 +604,26 @@ public abstract class SubSystem {
   }
 
   public void draw() {
-    if (currentState != targetState ) {
-      if (globalBlinker) {
-        tint(255, 0, 0);
-      } 
-      else {
-        tint(255, 255, 0);
-      }
+
+    if (isBroken()) {
+      tint(100, 100, 100);
+      image(img, pos.x + random(4) - 2, pos.y + random(4) - 2);
     } 
     else {
-      tint(0, 255, 0);
+      if (currentState != targetState ) {
+        if (globalBlinker) {
+          tint(255, 0, 0);
+        } 
+        else {
+          tint(255, 255, 0);
+        }
+      } 
+      else {
+        tint(0, 255, 0);
+      }
+      image(img, pos.x, pos.y);
     }
-    image(img, pos.x, pos.y);
+
     noTint();
   }
 }
@@ -508,9 +634,12 @@ public class FuelFlowRateSystem extends SubSystem {
 
   public FuelFlowRateSystem(String name, PVector pos, PImage p) {
     super(name, pos, p);
+    maxHealth = 60;
+    health = 60;
   }
 
   public void toggleState() {
+    if (isBroken()) return;
     if (isFailed()) {
       currentState = targetState;
     }
@@ -535,16 +664,21 @@ public class FuelFlowRateSystem extends SubSystem {
 
   public void draw() {
 
-    if (isFailed() ) {
-      if (globalBlinker) {
-        tint(255, 0, 0);
-      } 
-      else {
-        tint(255, 255, 0);
-      }
+    if (isBroken()) {
+      tint(100, 100, 100);
     } 
     else {
-      tint(0, 255, 0);
+      if (isFailed() ) {
+        if (globalBlinker) {
+          tint(255, 0, 0);
+        } 
+        else {
+          tint(255, 255, 0);
+        }
+      } 
+      else {
+        tint(0, 255, 0);
+      }
     }
     image(img, pos.x, pos.y);
     noTint();
@@ -573,9 +707,12 @@ public class ModeratorCoilSystem extends SubSystem {
 
   public ModeratorCoilSystem(String name, PVector pos, PImage p) {
     super(name, pos, p);
+    maxHealth = 70;
+    health = 70;
   }
 
   public void toggleState() {
+    if (isBroken()) return;
     if (isFailed()) {
       currentState = targetState;
     }
@@ -592,21 +729,27 @@ public class ModeratorCoilSystem extends SubSystem {
   }
 
   public void setState(int state) {
+    if (isBroken()) return;
     super.setState(1000 - state);
   }
 
   public void draw() {
 
-    if (isFailed() ) {
-      if (globalBlinker) {
-        tint(255, 0, 0);
-      } 
-      else {
-        tint(255, 255, 0);
-      }
+    if (isBroken()) {
+      tint(100, 100, 100);
     } 
     else {
-      tint(0, 255, 0);
+      if (isFailed() ) {
+        if (globalBlinker) {
+          tint(255, 0, 0);
+        } 
+        else {
+          tint(255, 255, 0);
+        }
+      } 
+      else {
+        tint(0, 255, 0);
+      }
     }
     image(img, pos.x, pos.y);
     noTint();
@@ -633,6 +776,8 @@ public class CoilSubSystem extends SubSystem {
 
   public CoilSubSystem(String name, PVector pos, PImage p) {
     super(name, pos, p);
+    maxHealth = 90;
+    health = 90;
   }
 
   public void createFailure() {
@@ -641,22 +786,28 @@ public class CoilSubSystem extends SubSystem {
 
   public void draw() {
     super.draw();
-    if (isFailed()) {
-      fill(255, 0, 0);
+    if (isBroken()) {
+      tint(100, 100, 100);
     } 
     else {
-      fill(0, 255, 0);
-    }
-    if (currentState == 0) {
-      textFont(font, 25);
-      text("A", pos.x + 50, pos.y + 65);
-    } 
-    else {
-      textFont(font, 25);
-      text("B", pos.x + 50, pos.y + 65);
+      if (isFailed()) {
+        fill(255, 0, 0);
+      } 
+      else {
+        fill(0, 255, 0);
+      }
+      if (currentState == 0) {
+        textFont(font, 25);
+        text("A", pos.x + 50, pos.y + 65);
+      } 
+      else {
+        textFont(font, 25);
+        text("B", pos.x + 50, pos.y + 65);
+      }
     }
   }
   public void toggleState() {
+    if (isBroken()) return;
     if (isFailed()) {
       currentState = targetState;
     }
@@ -678,9 +829,12 @@ public class MultiValueSystem extends SubSystem {
 
   int maxVals = 1;
 
+
   public MultiValueSystem(String name, PVector pos, PImage p, int maxVals) {
     super(name, pos, p);
     this.maxVals = maxVals;
+    maxHealth = 120;
+    health = maxHealth;
   }
 
   public void createFailure() {
@@ -692,7 +846,7 @@ public class MultiValueSystem extends SubSystem {
   }
 
   public void toggleState() {
-
+    if (isBroken()) return;
     currentState ++;
     currentState %= maxVals;
   }
@@ -706,6 +860,8 @@ public class OnOffSystem extends SubSystem {
 
   public OnOffSystem(String name, PVector pos, PImage p) {
     super(name, pos, p);
+    maxHealth = 40;
+    health = maxHealth;
   }
 
   public void createFailure() {
