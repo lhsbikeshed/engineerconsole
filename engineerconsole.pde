@@ -108,7 +108,7 @@ void setup() {
   displayMap.put("pwned", new PwnedDisplay());
   displayMap.put("wormholeStatus", wormholeDisplay );
 
-  currentScreen = displayMap.get("power");
+  currentScreen = displayMap.get("jamming");
 
 
   bootDisplay = new BootDisplay();

@@ -31,8 +31,8 @@ public class JamDisplay implements Display {
   
   int nextChangeTime = 4500;  //time between changes of the graph
 
-  int dialA = 0;
-  int dialB = 0;
+  int dialA = 1;
+  int dialB = 1;
   boolean jamAttempt = false;
   boolean jamSuccess = false;  //
   int jamTimer = 0;
