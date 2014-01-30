@@ -265,12 +265,19 @@ public class JamDisplay implements Display {
     }
     println(v[1]);
 
+    //when the jam dials change and they change to the correct ones add a little time to the 
+    //jamfrequency change timout, makes it a little easier
     if (v[0].equals("JAMA")) {
       dialA = Integer.parseInt(v[1]);
-      println(dialA);
+      if(dialA - 1 == target[0] && dialB - 1 == target[1]){
+        lastChangeTime += 800; //give em an extra 800ms to whack the button
+      }
     } 
     else if (v[0].equals("JAMB")) {
       dialB = Integer.parseInt(v[1]);
+      if(dialA - 1 == target[0] && dialB - 1 == target[1]){
+        lastChangeTime += 800; //give em an extra 800ms to whack the button
+      }
     } 
     else if (v[0].equals("KEY")) {
       if (v[1].equals(";")) {

@@ -185,7 +185,7 @@ public class PowerDisplay implements Display {
     //find a random system that isnt failed or broken
     SubSystem s = getRandomSystem(true, true);
     if (s != null) {
-      s.createFailure();
+      s.createFailure(difficulty);
     }
   }
 
@@ -569,7 +569,7 @@ public abstract class SubSystem {
   public void smash() {
     health = 0;
     //isBroken = true;
-    createFailure();
+    createFailure(1);
   }
 
   public void setState(int state) {
@@ -584,7 +584,7 @@ public abstract class SubSystem {
   public void reset() {
     firstValueSet = true;
     currentState = targetState;
-    health = maxHealth;
+   // health = maxHealth;
   }
 
   public void doRepairs() {
@@ -598,7 +598,7 @@ public abstract class SubSystem {
   }
 
   public abstract String getPuzzleString();  //get the instruction that the user sees for this system
-  public abstract void createFailure();      //make this system fail
+  public abstract void createFailure(int difficulty);      //make this system fail, pass in difficulty
   public String getStatusString() {    //the state that is drawn to screen i.e. "A" or "300/sec"
     return stateNames[currentState];
   }
@@ -645,8 +645,12 @@ public class FuelFlowRateSystem extends SubSystem {
     }
   }
 
-  public void createFailure() {
-    int newState = (int)random(999);    
+  public void createFailure(int difficulty) {
+    int randAmt = ((difficulty * 20 ) / 2) + (50 - (int)random(100));  
+    randAmt = randAmt - (randAmt / 2);  
+    int newState = currentState + randAmt;  
+    if(newState < 0) newState = 0;
+    if(newState > 999) newState = 999;
 
     if (newState < currentState) {
       targetBelowInitial = true;
@@ -718,8 +722,12 @@ public class ModeratorCoilSystem extends SubSystem {
     }
   }
 
-  public void createFailure() {
-    int newState = (int)random(999);    
+  public void createFailure(int difficulty) {
+    int randAmt = ((difficulty * 20 ) / 2) + (50 - (int)random(100));  
+    randAmt = randAmt - (randAmt / 2);  //offset it back by half to give -250 -> 250
+    int newState = currentState + randAmt;  
+    if(newState < 0) newState = 0;
+    if(newState > 999) newState = 999;
 
     targetState = newState;
   }
@@ -780,7 +788,7 @@ public class CoilSubSystem extends SubSystem {
     health = 90;
   }
 
-  public void createFailure() {
+  public void createFailure(int diff) {
     targetState = 1- currentState;
   }
 
@@ -837,7 +845,7 @@ public class MultiValueSystem extends SubSystem {
     health = maxHealth;
   }
 
-  public void createFailure() {
+  public void createFailure(int diff) {
     int ra = floor(random(maxVals));
     while (ra != targetState) {
       targetState = ra;
@@ -864,7 +872,7 @@ public class OnOffSystem extends SubSystem {
     health = maxHealth;
   }
 
-  public void createFailure() {
+  public void createFailure(int diff) {
     targetState = 1- currentState;
   }
 
