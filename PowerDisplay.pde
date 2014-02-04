@@ -185,7 +185,7 @@ public class PowerDisplay implements Display {
     //find a random system that isnt failed or broken
     SubSystem s = getRandomSystem(true, true);
     if (s != null) {
-      s.createFailure(difficulty);
+      s.createFailure();
     }
   }
 
@@ -439,6 +439,9 @@ public class PowerDisplay implements Display {
     else if (theOscMessage.checkAddrPattern("/system/powerManagement/failureSpeed")) {
       difficulty = theOscMessage.get(0).intValue();
       println("diff changed " + difficulty);
+      for (SubSystem s : subsystemList){
+        s.setDifficulty(difficulty);
+      }
     } 
     else if (theOscMessage.checkAddrPattern("/ship/damage")==true) {
       float damage = theOscMessage.get(0).floatValue();
@@ -539,6 +542,8 @@ public abstract class SubSystem {
   //protected boolean isBroken = false;
   protected int maxHealth = 100;
   protected int health = maxHealth;
+  protected int failedFor = 0;
+  protected int difficulty = 1;
 
 
   protected boolean firstValueSet = true;
@@ -547,6 +552,10 @@ public abstract class SubSystem {
     img = p;
     this.name = name;
     this.pos = pos;
+  }
+  
+  public void setDifficulty(int i){
+    difficulty = i;
   }
 
   public void toggleState() {
@@ -563,13 +572,15 @@ public abstract class SubSystem {
   }
 
   public boolean isBroken() {
-    return health < maxHealth;
-  }
+    return health <= 10;
+  } 
+
+
 
   public void smash() {
     health = 0;
     //isBroken = true;
-    createFailure(1);
+    createFailure();
   }
 
   public void setState(int state) {
@@ -584,7 +595,8 @@ public abstract class SubSystem {
   public void reset() {
     firstValueSet = true;
     currentState = targetState;
-   // health = maxHealth;
+    failedFor = 0;
+    // health = maxHealth;
   }
 
   public void doRepairs() {
@@ -593,12 +605,13 @@ public abstract class SubSystem {
       health += random(3);
       if (health >= maxHealth) {
         health = maxHealth;
+        failedFor = 0;
       }
     }
   }
 
   public abstract String getPuzzleString();  //get the instruction that the user sees for this system
-  public abstract void createFailure(int difficulty);      //make this system fail, pass in difficulty
+  public abstract void createFailure();      //make this system fail, pass in difficulty
   public String getStatusString() {    //the state that is drawn to screen i.e. "A" or "300/sec"
     return stateNames[currentState];
   }
@@ -610,6 +623,7 @@ public abstract class SubSystem {
       image(img, pos.x + random(4) - 2, pos.y + random(4) - 2);
     } 
     else {
+
       if (currentState != targetState ) {
         if (globalBlinker) {
           tint(255, 0, 0);
@@ -617,8 +631,14 @@ public abstract class SubSystem {
         else {
           tint(255, 255, 0);
         }
+        failedFor ++;
+        if (failedFor > 400 + (10 - difficulty) * 50) {
+          smash();
+          failedFor = 0;
+        }
       } 
       else {
+        failedFor = 0;
         tint(0, 255, 0);
       }
       image(img, pos.x, pos.y);
@@ -645,12 +665,12 @@ public class FuelFlowRateSystem extends SubSystem {
     }
   }
 
-  public void createFailure(int difficulty) {
+  public void createFailure() {
     int randAmt = ((difficulty * 20 ) / 2) + (50 - (int)random(100));  
     randAmt = randAmt - (randAmt / 2);  
     int newState = currentState + randAmt;  
-    if(newState < 0) newState = 0;
-    if(newState > 999) newState = 999;
+    if (newState < 0) newState = 0;
+    if (newState > 999) newState = 999;
 
     if (newState < currentState) {
       targetBelowInitial = true;
@@ -672,7 +692,13 @@ public class FuelFlowRateSystem extends SubSystem {
       tint(100, 100, 100);
     } 
     else {
+
       if (isFailed() ) {
+        failedFor ++;
+        if (failedFor > 400  + (10 - difficulty) * 50) {
+          smash();
+          failedFor = 0;
+        }
         if (globalBlinker) {
           tint(255, 0, 0);
         } 
@@ -681,6 +707,7 @@ public class FuelFlowRateSystem extends SubSystem {
         }
       } 
       else {
+        failedFor = 0;
         tint(0, 255, 0);
       }
     }
@@ -722,12 +749,12 @@ public class ModeratorCoilSystem extends SubSystem {
     }
   }
 
-  public void createFailure(int difficulty) {
+  public void createFailure() {
     int randAmt = ((difficulty * 20 ) / 2) + (50 - (int)random(100));  
     randAmt = randAmt - (randAmt / 2);  //offset it back by half to give -250 -> 250
     int newState = currentState + randAmt;  
-    if(newState < 0) newState = 0;
-    if(newState > 999) newState = 999;
+    if (newState < 0) newState = 0;
+    if (newState > 999) newState = 999;
 
     targetState = newState;
   }
@@ -747,7 +774,13 @@ public class ModeratorCoilSystem extends SubSystem {
       tint(100, 100, 100);
     } 
     else {
+
       if (isFailed() ) {
+        failedFor++;
+        if (failedFor > 400  + (10 - difficulty) * 50) {
+          smash();
+          failedFor = 0;
+        }
         if (globalBlinker) {
           tint(255, 0, 0);
         } 
@@ -756,6 +789,7 @@ public class ModeratorCoilSystem extends SubSystem {
         }
       } 
       else {
+        failedFor = 0;
         tint(0, 255, 0);
       }
     }
@@ -788,7 +822,7 @@ public class CoilSubSystem extends SubSystem {
     health = 90;
   }
 
-  public void createFailure(int diff) {
+  public void createFailure() {
     targetState = 1- currentState;
   }
 
@@ -845,7 +879,7 @@ public class MultiValueSystem extends SubSystem {
     health = maxHealth;
   }
 
-  public void createFailure(int diff) {
+  public void createFailure() {
     int ra = floor(random(maxVals));
     while (ra != targetState) {
       targetState = ra;
@@ -872,7 +906,7 @@ public class OnOffSystem extends SubSystem {
     health = maxHealth;
   }
 
-  public void createFailure(int diff) {
+  public void createFailure() {
     targetState = 1- currentState;
   }
 
