@@ -145,14 +145,13 @@ public class PowerDisplay implements Display {
   }
 
   private void addFailure() {
-    
+
 
     //find a random system that isnt failed or broken
     SubSystem s = getRandomSystem(true, true);
     if (s != null) {
       s.createFailure();
     }
-    
   }
 
   void updateFailCounts() {
@@ -239,7 +238,7 @@ public class PowerDisplay implements Display {
     tint( (int)map(hullState, 0, 100, 255, 0), (int)map(hullState, 0, 100, 0, 255), 0);
     image(hullStateImage, 29, 568);
     noTint();
-    
+
     //power assignment bars
     fill(0, 255, 0);
     for (int i = 0; i < 4; i++) {
@@ -413,7 +412,7 @@ public class PowerDisplay implements Display {
     else if (theOscMessage.checkAddrPattern("/system/powerManagement/failureSpeed")) {
       difficulty = theOscMessage.get(0).intValue();
       println("diff changed " + difficulty);
-      for (SubSystem s : subsystemList){
+      for (SubSystem s : subsystemList) {
         s.setDifficulty(difficulty);
       }
     } 
@@ -493,6 +492,10 @@ public class PowerDisplay implements Display {
       SubSystem s = switchToSystemMap.get(lookup);
       if (s != null) {
         s.setState(Integer.parseInt(p[2]));
+        //make a beep if the system isnt currently broken
+        if (!s.isBroken()) {
+          consoleAudio.randomBeep();
+        }
       }
     }
   }
@@ -527,8 +530,8 @@ public abstract class SubSystem {
     this.name = name;
     this.pos = pos;
   }
-  
-  public void setDifficulty(int i){
+
+  public void setDifficulty(int i) {
     difficulty = i;
   }
 

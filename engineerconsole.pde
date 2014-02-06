@@ -281,7 +281,6 @@ void dealWithSerial(String vals) {
       } else {
 
         String t = "NEWSWITCH:" + sw[0] + ":" + sw[1];
-        consoleAudio.randomBeep();
 
         currentScreen.serialEvent(t);
       }
