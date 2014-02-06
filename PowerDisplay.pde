@@ -145,48 +145,14 @@ public class PowerDisplay implements Display {
   }
 
   private void addFailure() {
-    //    int ct = countSystemFailures();
-    //    if (ct > 7) {
-    //      //we have a reactor failure!
-    //      println("FAUL");
-    //      OscMessage msg = new OscMessage("/system/reactor/fail");
-    //      p5.flush(msg, new NetAddress(serverIP, 12000));
-    //      for (SubSystem s : subsystemList) {
-    //        s.reset();
-    //      }
-    //      probeEngPanel();
-    //    } 
-    ////    else if ( ct > 4) {
-    ////      //flash a warning
-    ////      reactorFailWarn = true;
-    ////      consoleAudio.playClip("failWarning");
-    ////    } 
-    ////    else {
-    ////      reactorFailWarn = false;
-    ////    }
-
-    //find everything that isnt failed or broken, then fail it
-    //    ArrayList<SubSystem> notFailedList = new ArrayList<SubSystem>();
-    //    for (SubSystem s : subsystemList) {
-    //      if (!s.isFailed() && !s.isBroken()) {
-    //        notFailedList.add(s);
-    //      }
-    //    }
-    //
-    //    int rand =(int) floor(random(notFailedList.size()));
-    //    if (rand >= 0 && rand < notFailedList.size()) {
-    //      SubSystem s = notFailedList.get(rand);
-    //      s.createFailure();
-    //    } 
-    //    else {
-    //      //oh fuck EVERYTHING FAILED
-    //    }
+    
 
     //find a random system that isnt failed or broken
     SubSystem s = getRandomSystem(true, true);
     if (s != null) {
       s.createFailure();
     }
+    
   }
 
   void updateFailCounts() {
@@ -197,6 +163,7 @@ public class PowerDisplay implements Display {
   }
 
   public void draw() {
+    //check to see if we need to add a failure
     if (lastFailureTime + nextFailureTime < millis() && failureState) {
       lastFailureTime = millis();
       //nextFailureTime = 5000 + (long)random(3000);
@@ -211,6 +178,7 @@ public class PowerDisplay implements Display {
 
     //calculate the reactor health changes
     int reactorDelta = 5;
+    //find groups that have failed entirely, for each one lower the reactordelta
     for (int[] sl : systemGroupList) {
       boolean groupFail = true;
       for (int i = 0; i < sl.length; i++) {
@@ -231,19 +199,21 @@ public class PowerDisplay implements Display {
     else if (reactorHealth > threshHold) {
       reactorFailWarn = false;
     }
-
+    //finally change the actual reactor health
     reactorHealth += reactorDelta;
     if (reactorHealth >= maxReactorHealth ) { 
       reactorHealth = maxReactorHealth;
     } 
-    ;
+    //fail if failed
     if (reactorHealth <= 0) {
       reactorHealth = 0;
       failReactor();
     };
 
+
+    //OK LETS DRAW SOME THINGS
     noStroke();
-    //draw a reactor flasher
+    //draw a reactor pulsing
     int num = height / 20;
     for (int i = 0; i < num; i++) {
       int c = (int)map( sin( millis() / 200.0f  - i/2.0f), -1.0f, 1.0f, 0, 255);
@@ -256,27 +226,28 @@ public class PowerDisplay implements Display {
       rect(0, i * 20, width, 20);
     }
 
+    //bg image
     image(bgImage, 0, 0, width, height);
     //draw reactor health
     fill(255);
     textFont(font, 15);
     text("REACTOR POWER", 267, 296);
     text((int)map(reactorHealth, 0, maxReactorHealth, 0, 100), 348, 310);
-    //text(reactorDelta, 248, 340);
 
 
     //draw hull damage
     tint( (int)map(hullState, 0, 100, 255, 0), (int)map(hullState, 0, 100, 0, 255), 0);
     image(hullStateImage, 29, 568);
     noTint();
-
-
+    
+    //power assignment bars
     fill(0, 255, 0);
     for (int i = 0; i < 4; i++) {
       int w = power[i] * 33;
       rect(884, 365 + i * 80, -w, 60);
     }
 
+    //bits o text
     textFont(font, 15);
     text((int)hullState  + "%", 178, 750);
     textFont(font, 12);
@@ -287,17 +258,20 @@ public class PowerDisplay implements Display {
     text((int)jumpCharge  + "%", 652, 714);
 
 
-
+    //draw the subssystem icons
     int baseX = 625;
     int baseY = 85; 
     textFont(font, 12);   
     for (SubSystem s : subsystemList) {
+      //whilst were at it lets repair the systems if the power to internal is on full
       if (power[1] == 3) {
         s.doRepairs();
       }
       s.draw();
+      //draw the instruction list in the top right
+      //ignoring failed items that are now broken
       textFont(font, 12);  
-      if (s.isFailed()) {
+      if (s.isFailed() && !s.isBroken()) {
         fill(0, 255, 0);
         text(s.getPuzzleString(), baseX, baseY);
         baseY += 20;
