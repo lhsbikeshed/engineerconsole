@@ -555,6 +555,11 @@ public abstract class SubSystem {
 
 
   public void smash() {
+    if(consoleAudio.clipExists(name  + "-dead")){
+      consoleAudio.playClip(name + "-dead");
+    } else {
+      consoleAudio.playClip("systemDamage");
+    }
     health = 0;
     //isBroken = true;
     createFailure();

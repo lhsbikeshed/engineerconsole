@@ -60,7 +60,7 @@ public class ConsoleAudio {
     for (int i = 0 ; i < lines.length; i++) {
       String[] parts = lines[i].split("=");
       if (parts.length == 2 && !parts[0].startsWith("#")) {
-        println("loading: " + parts[1]);
+        println("loading: " + parts[1] + " as " + parts[0]);
         AudioPlayer s = minim.loadFile("audio/" + parts[1], 512);
         //move to right channel
         s.setPan(1.0f);
@@ -96,6 +96,14 @@ public class ConsoleAudio {
     } 
     else {
       println("ALERT: tried to play " + name + " but not found");
+    }
+  }
+  /* does a given name exist? */
+  public boolean clipExists(String name){
+    if(audioList.get(name) != null){
+      return true;
+    } else {
+      return false;
     }
   }
 
