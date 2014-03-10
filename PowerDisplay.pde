@@ -443,9 +443,11 @@ public class PowerDisplay implements Display {
           println(s.name);
           s.toggleState();
           consoleAudio.randomBeep();
+          s.smash();
           break;
         }
       }
+      
     }
   }
 
@@ -560,6 +562,7 @@ public abstract class SubSystem {
     } else {
       consoleAudio.playClip("systemDamage");
     }
+    addHighlight( new Highlighter( new PVector(pos.x + img.width/2, pos.y + img.height/2), new PVector(img.width * 5, img.height*5), new PVector(img.width, img.height), 1000, 2000));
     health = 0;
     //isBroken = true;
     createFailure();

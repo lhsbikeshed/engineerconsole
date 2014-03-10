@@ -42,6 +42,9 @@ ShipState shipState = new ShipState();
 Minim minim;
 ConsoleAudio consoleAudio;
 
+//highlights
+ArrayList<Highlighter> highlightList = new ArrayList(0);
+
 
 PFont font;
 long deathTime = 0;
@@ -72,7 +75,8 @@ void setup() {
     serialEnabled = false;
     serverIP = "127.0.0.1";
     shipState.poweredOn = true;
-  } else {
+  } 
+  else {
     serialEnabled = true;
     serverIP = "10.0.0.100";
     shipState.poweredOn = false;
@@ -82,7 +86,7 @@ void setup() {
   size(1024, 768, P2D);
   noSmooth();
   frameRate(30);
-  if(!testMode){
+  if (!testMode) {
     hideCursor();
   }
 
@@ -126,7 +130,7 @@ void setup() {
 }
 
 void draw() {
-  if(shipState.sillinessInProgress && sillinessStartTime + 5000 < millis()){
+  if (shipState.sillinessInProgress && sillinessStartTime + 5000 < millis()) {
     shipState.sillinessInProgress = false;
   }
   if (blinkTime + 750 < millis()) {
@@ -143,7 +147,8 @@ void draw() {
         //get first char
         dealWithSerial(serialBuffer);
         serialBuffer = "";
-      } else {
+      } 
+      else {
         serialBuffer += val;
       }
     }
@@ -154,7 +159,8 @@ void draw() {
         //get first char
         dealWithSerial(panelBuffer);
         panelBuffer = "";
-      } else {
+      } 
+      else {
         panelBuffer += val;
       }
     }
@@ -171,10 +177,21 @@ void draw() {
       int pos = (int)textWidth(shipState.deathText);
       text(shipState.deathText, (width/2) - pos/2, 340);
     }
-  } else {
+  } 
+  else {
     if (shipState.poweredOn) {
       currentScreen.draw();
-    } else {
+      for(int i = highlightList.size() - 1; i > 0; i--){
+        Highlighter h = highlightList.get(i);
+        h.update();
+        if (h.isDone()) {
+
+
+         highlightList.remove(h);
+        }
+      }
+    } 
+    else {
       if (shipState.poweringOn) {
         bootDisplay.draw();
         if (bootDisplay.isReady()) {
@@ -194,7 +211,8 @@ void draw() {
       int a = (int)map(millis() - heartBeatTimer, 0, 400, 255, 0);
       fill(0, 0, 0, a);
       rect(0, 0, width, height);
-    } else {
+    } 
+    else {
       heartBeatTimer = -1;
     }
   }
@@ -212,13 +230,17 @@ public void keyPressed() {
   currentScreen.keyPressed();
   if (key >= '0' && key <= '9') {
     currentScreen.serialEvent("KEY:" + key);
-  } else if (key == ' ') {
+  } 
+  else if (key == ' ') {
     currentScreen.serialEvent("BUTTON:AIRLOCK");
-  } else if (key == ';') { //change me to something on keyboard
+  } 
+  else if (key == ';') { //change me to something on keyboard
     currentScreen.serialEvent("KEY:" + key);
-  } else if (key >= 'a' && key <= 't') {
+  } 
+  else if (key >= 'a' && key <= 't') {
     currentScreen.serialEvent("KEY:" + key);
-  } else if (key == ' ') {
+  } 
+  else if (key == ' ') {
     currentScreen.serialEvent("KEY:" + key);
   } 
   if (key == '[') {
@@ -278,36 +300,44 @@ void dealWithSerial(String vals) {
         OscMessage myMessage = new OscMessage("/control/grapplingHookState");
         myMessage.add(Integer.parseInt(sw[1]));
         oscP5.flush(myMessage, new NetAddress(serverIP, 12000));
-      } else {
+      } 
+      else {
 
         String t = "NEWSWITCH:" + sw[0] + ":" + sw[1];
 
         currentScreen.serialEvent(t);
       }
-    } else if (vals.substring(0, 2).equals("PC")){//probe complete, unmute audio for buttons
-       consoleAudio.muteBeeps = false;
-    } else {
+    } 
+    else if (vals.substring(0, 2).equals("PC")) {//probe complete, unmute audio for buttons
+      consoleAudio.muteBeeps = false;
+    } 
+    else {
       //its a dial
       String t = "NEWDIAL:" + vals.substring(1, 2) + ":" + vals.substring(3);
-      
+
       currentScreen.serialEvent(t);
     }
-  } else {
+  } 
+  else {
 
     if (p == 'A' || p == 'B') { //values from the jamming knobs
       int v = Integer.parseInt(vals.substring(1, vals.length()));  
       String s = "JAM" + p + ":"+v;
       currentScreen.serialEvent(s);
-    } else if (p == 'S') {
+    } 
+    else if (p == 'S') {
       int v = Integer.parseInt(vals.substring(1, vals.length()));  
       //println(v);
       if (v == 0) {
         consoleAudio.playClipForce("codeFail");
-      } else if (v <= 5) {
+      } 
+      else if (v <= 5) {
         consoleAudio.playClipForce("beepLow");
-      } else if (v <= 9) {
+      } 
+      else if (v <= 9) {
         consoleAudio.playClipForce("beepHigh");
-      } else {
+      } 
+      else {
         consoleAudio.playClipForce("reactorReady");
       }
       if (v > 0) {  
@@ -315,22 +345,26 @@ void dealWithSerial(String vals) {
 
         myMessage.add(v);
         oscP5.flush(myMessage, new NetAddress(serverIP, 12000));
-      } else {
+      } 
+      else {
         OscMessage myMessage = new OscMessage("/system/reactor/setstate");
         myMessage.add(0);
         oscP5.flush(myMessage, new NetAddress(serverIP, 12000));
       }
-    } else if ( p=='R') {
+    } 
+    else if ( p=='R') {
       OscMessage myMessage = new OscMessage("/system/reactor/setstate");
       myMessage.add(1);
       oscP5.flush(myMessage, new NetAddress(serverIP, 12000));
-    } else if (p == 'p') {
+    } 
+    else if (p == 'p') {
       int v = Integer.parseInt(vals.substring(1, vals.length())) + 1;  
       String s = "KEY:"+v;
       consoleAudio.randomBeep();
 
       currentScreen.serialEvent(s);
-    } else if (p=='L') {
+    } 
+    else if (p=='L') {
 
       currentScreen.serialEvent("BUTTON:AIRLOCK");
     }
@@ -384,7 +418,8 @@ void oscEvent(OscMessage theOscMessage) {
       bootDisplay.stop();
       bannerSystem.cancel();
       resetDevices();
-    } else {
+    } 
+    else {
 
 
       if (!shipState.poweredOn ) {
@@ -393,7 +428,8 @@ void oscEvent(OscMessage theOscMessage) {
       }
     }
     currentScreen.oscMessage(theOscMessage);
-  } else if (theOscMessage.checkAddrPattern("/scene/youaredead") == true) {
+  } 
+  else if (theOscMessage.checkAddrPattern("/scene/youaredead") == true) {
     //oh noes we died
     shipState.areWeDead = true;
     shipState.deathText = theOscMessage.get(0).stringValue();
@@ -401,7 +437,8 @@ void oscEvent(OscMessage theOscMessage) {
     if (serialEnabled) {
       serialPort.write('k');
     }
-  } else if (theOscMessage.checkAddrPattern("/game/reset") == true) {
+  } 
+  else if (theOscMessage.checkAddrPattern("/game/reset") == true) {
     //reset the entire game
     if (serialEnabled) {
       serialPort.write('r');
@@ -413,25 +450,30 @@ void oscEvent(OscMessage theOscMessage) {
     bootDisplay.stop();  
     println("reset");
     shipState.sillinessLevel = 0;
-  } else if (theOscMessage.checkAddrPattern("/engineer/powerState") == true) {
+  } 
+  else if (theOscMessage.checkAddrPattern("/engineer/powerState") == true) {
 
     if (theOscMessage.get(0).intValue() == 1) {
       shipState.poweredOn = true;
       shipState.poweringOn = false;
       bootDisplay.stop();
-    } else {
+    } 
+    else {
       shipState.poweredOn = false;
       shipState.poweringOn = false;
     }
-  } else if (theOscMessage.checkAddrPattern("/ship/effect/heartbeat") == true) {
+  } 
+  else if (theOscMessage.checkAddrPattern("/ship/effect/heartbeat") == true) {
     heartBeatTimer = millis();
-  } else if (theOscMessage.checkAddrPattern("/ship/damage")==true) {
+  } 
+  else if (theOscMessage.checkAddrPattern("/ship/damage")==true) {
 
     damageTimer = millis();
-    if(currentScreen == powerDisplay){
+    if (currentScreen == powerDisplay) {
       powerDisplay.oscMessage(theOscMessage);
     }
-  } else if ( theOscMessage.checkAddrPattern("/clientscreen/EngineerStation/changeTo") ) {
+  } 
+  else if ( theOscMessage.checkAddrPattern("/clientscreen/EngineerStation/changeTo") ) {
     if (!shipState.poweredOn) { 
       return;
     }
@@ -446,7 +488,8 @@ void oscEvent(OscMessage theOscMessage) {
       e.printStackTrace();
       changeDisplay(displayMap.get("power"));
     }
-  } else if (theOscMessage.checkAddrPattern("/clientscreen/showBanner") ) {
+  } 
+  else if (theOscMessage.checkAddrPattern("/clientscreen/showBanner") ) {
     String title = theOscMessage.get(0).stringValue();
     String text = theOscMessage.get(1).stringValue();
     int duration = theOscMessage.get(2).intValue();
@@ -455,43 +498,52 @@ void oscEvent(OscMessage theOscMessage) {
     bannerSystem.setTitle(title);
     bannerSystem.setText(text);
     bannerSystem.displayFor(duration);
-  } else if (theOscMessage.checkAddrPattern("/system/boot/diskNumbers") ) {
+  } 
+  else if (theOscMessage.checkAddrPattern("/system/boot/diskNumbers") ) {
 
     int[] disks = { 
       theOscMessage.get(0).intValue(), theOscMessage.get(1).intValue(), theOscMessage.get(2).intValue()
       };
       println(disks);
     bootDisplay.setDisks(disks);
-    
+
     /* ---------next section is for routing general display messages to their right screens */
-  } else if (theOscMessage.addrPattern().startsWith("/system/powerManagement")) {
+  } 
+  else if (theOscMessage.addrPattern().startsWith("/system/powerManagement")) {
     powerDisplay.oscMessage(theOscMessage);
-  } else if (theOscMessage.addrPattern().startsWith("/engineer/wormholeStatus/")) {
+  } 
+  else if (theOscMessage.addrPattern().startsWith("/engineer/wormholeStatus/")) {
 
     wormholeDisplay.oscMessage(theOscMessage);
-  } else if (theOscMessage.addrPattern().startsWith("/system/jammer/")) {
-   
+  } 
+  else if (theOscMessage.addrPattern().startsWith("/system/jammer/")) {
+
     jamDisplay.oscMessage(theOscMessage);
-  } else {
+  } 
+  else {
 
     currentScreen.oscMessage(theOscMessage);
   }
 }
 
+void addHighlight(Highlighter h){
+   highlightList.add(h);
+}
+
 void mouseClicked() {
   //println(mouseX + ":" + mouseY);
-  if(currentScreen == powerDisplay){
+  if (currentScreen == powerDisplay) {
     ((PowerDisplay)currentScreen).mouseClick(mouseX, mouseY);
   }
+
 }
 
 
-void hideCursor(){
+void hideCursor() {
   BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
   Cursor blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(
-    cursorImg, new Point(0,0), "blank cursor");
-    frame.setCursor(blankCursor);
-  
+  cursorImg, new Point(0, 0), "blank cursor");
+  frame.setCursor(blankCursor);
 }
 public class ShipState {
 
