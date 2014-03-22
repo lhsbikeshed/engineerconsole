@@ -158,6 +158,7 @@ public class PowerDisplay implements Display {
     //update everyone with the current fail count
     OscMessage msg = new OscMessage("/system/powerManagement/failureCount");   
     msg.add( countSystemFailures() );
+    msg.add( subsystemList.length);
     p5.flush(msg, new NetAddress(serverIP, 12000));
   }
 
