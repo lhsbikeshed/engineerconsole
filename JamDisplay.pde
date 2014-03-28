@@ -245,7 +245,7 @@ public class JamDisplay implements Display {
     if(theOscMessage.checkAddrPattern("/system/jammer/setDifficulty")){
       int d = theOscMessage.get(0).intValue();
       if(d >= 1 && d <= 10){
-        nextChangeTime = (7 - (1 +  d / 2)) * 1000;
+        nextChangeTime = (7 - (1 +  d / 2)) * 750;
       }
     }
   }
