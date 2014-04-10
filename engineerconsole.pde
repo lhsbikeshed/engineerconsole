@@ -45,6 +45,8 @@ ConsoleAudio consoleAudio;
 //highlights
 ArrayList<Highlighter> highlightList = new ArrayList(0);
 
+//damage effects
+DamageEffect damageEffects;
 
 PFont font;
 long deathTime = 0;
@@ -123,7 +125,12 @@ void setup() {
   minim = new Minim(this);
   consoleAudio = new ConsoleAudio(minim);
 
+  //load the font used EVERYWHERE
   font = loadFont("HanzelExtendedNormal-48.vlw");
+
+  //damage stuff
+  damageEffects = new DamageEffect();
+
   /*sync to current game screen*/
   OscMessage myMessage = new OscMessage("/game/Hello/EngineerStation");  
   oscP5.send(myMessage, new NetAddress(serverIP, 12000));
@@ -179,15 +186,16 @@ void draw() {
     }
   } 
   else {
+    damageEffects.startTransform();
     if (shipState.poweredOn) {
       currentScreen.draw();
-      for(int i = highlightList.size() - 1; i > 0; i--){
+      for (int i = highlightList.size() - 1; i > 0; i--) {
         Highlighter h = highlightList.get(i);
         h.update();
         if (h.isDone()) {
 
 
-         highlightList.remove(h);
+          highlightList.remove(h);
         }
       }
     } 
@@ -203,7 +211,9 @@ void draw() {
         }
       }
     }
+    
     bannerSystem.draw();      //THIS
+    damageEffects.stopTransform();
   }
 
   if (heartBeatTimer > 0) {
@@ -217,11 +227,7 @@ void draw() {
     }
   }
 
-  if ( damageTimer + 1000 > millis()) {
-    if (random(10) > 3) {
-      image(noiseImage, 0, 0, width, height);
-    }
-  }
+  damageEffects.draw();
 }
 
 public void keyPressed() {
@@ -468,7 +474,7 @@ void oscEvent(OscMessage theOscMessage) {
   } 
   else if (theOscMessage.checkAddrPattern("/ship/damage")==true) {
 
-    damageTimer = millis();
+     damageEffects.startEffect(1000);
     if (currentScreen == powerDisplay) {
       powerDisplay.oscMessage(theOscMessage);
     }
@@ -526,8 +532,8 @@ void oscEvent(OscMessage theOscMessage) {
   }
 }
 
-void addHighlight(Highlighter h){
-   highlightList.add(h);
+void addHighlight(Highlighter h) {
+  highlightList.add(h);
 }
 
 void mouseClicked() {
@@ -535,7 +541,6 @@ void mouseClicked() {
   if (currentScreen == powerDisplay) {
     ((PowerDisplay)currentScreen).mouseClick(mouseX, mouseY);
   }
-
 }
 
 
