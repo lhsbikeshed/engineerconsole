@@ -21,6 +21,8 @@ public class PowerDisplay implements Display {
   int lastFailureCount = 0;
   int difficulty  = 1; //1 - 10
   int maxReactorHealth = 2500;
+  
+  int[] powerColours = {color(255,0,0), color(255,255,0), color(0,255,0)};
 
 
   //subsystem stuff   
@@ -244,6 +246,7 @@ public class PowerDisplay implements Display {
     fill(0, 255, 0);
     for (int i = 0; i < 4; i++) {
       int w = power[i] * 33;
+      fill(powerColours[ power[i] - 1]);
       rect(884, 365 + i * 80, -w, 60);
     }
 
