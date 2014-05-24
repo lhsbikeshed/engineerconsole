@@ -133,7 +133,7 @@ public class AirlockDisplay implements Display {
     println("setting airlock light to : " + state);
     OscMessage msg = new OscMessage("/system/effect/airlockLight");
     msg.add(state == true ? 1 : 0);
-    //p5.send(msg, myRemoteLocation);
+    p5.send(msg, myRemoteLocation);
   }
 
   public void oscMessage(OscMessage theOscMessage) {

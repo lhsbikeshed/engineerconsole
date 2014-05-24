@@ -246,7 +246,7 @@ public class DropDisplay implements Display {
 
   public void start() {
     structFail = false;
-    currentAuthCode = "62918"; //possibleAuthCodes[(int)random(3)];
+    currentAuthCode = possibleAuthCodes[(int)random(3)];
 
     chargePercent = 0;
     sceneStartTime = millis();
