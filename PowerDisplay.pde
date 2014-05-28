@@ -43,8 +43,10 @@ public class PowerDisplay implements Display {
     bgImage = loadImage("powerman2.png");
     hullStateImage = loadImage("hulldamageoverlay.png");
     reactorFailOverlay = loadImage("reactorFailOverlay.png");
-    fireSprite = new Sprite(loadImage("anims/fire.png"), 200,200,4,4);
-    fireSprite.frameSpeed = 2;
+    fireSprite = new Sprite(loadImage("anims/fire2.png"), 150,122,2,1);
+    fireSprite.frameSpeed = 20;
+    fireSprite.xCentre = 75;
+    fireSprite.yCentre = 61;
     
     for (int i = 0; i < 4; i++) {
       power[i] = 2;
@@ -277,10 +279,10 @@ public class PowerDisplay implements Display {
         s.doRepairs();
       }
       s.draw();
-      if(s.isBroken()){
-        noTint();
-        fireSprite.draw((int)s.pos.x, (int)s.pos.y, (int)s.size.x, (int)s.size.y);
-      }
+      //if(s.isBroken()){
+       // noTint();
+        //fireSprite.draw((int)(s.pos.x +s.size.x / 2), (int)(s.pos.y + s.size.y / 2), (int)s.size.x);
+     // }
       //draw the instruction list in the top right
       //ignoring failed items that are now broken
       textFont(font, 12);  

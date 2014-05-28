@@ -18,8 +18,8 @@ public class Sprite {
   int frameW, frameH;
   PImage[] frames;
   
-  int xCentre = 0;
-  int yCentre = 0;
+  public int xCentre = 0;
+  public int yCentre = 0;
   
   public Sprite(PImage sheet, int w, int h, int numFramesX, int numFramesY){
     frameW = w;
@@ -54,10 +54,15 @@ public class Sprite {
   }
   
   public void draw(int x, int y){
-    image(frames[currentFrame], x, y, drawWidth, drawHeight);
+    image(frames[currentFrame], x - xCentre, y - yCentre, drawWidth, drawHeight);
   }
   public void draw(int x, int y, int w, int h){
-    image(frames[currentFrame], x, y, w, h);
+    image(frames[currentFrame], x - xCentre, y - yCentre, w, h);
+  }
+  
+  public void draw(int x, int y, int w){  //draw with width, calculate the height from aspect ratio
+    int newH = (int)(w * (frameH / (float)frameW));
+    draw(x, y, w, newH);
   }
 }
       
