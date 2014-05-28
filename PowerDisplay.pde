@@ -23,6 +23,7 @@ public class PowerDisplay implements Display {
   int maxReactorHealth = 2500;
   
   int[] powerColours = {color(255,0,0), color(255,255,0), color(0,255,0)};
+  Sprite fireSprite; //sprite for the fire thats draw on dead systems
 
 
   //subsystem stuff   
@@ -42,6 +43,9 @@ public class PowerDisplay implements Display {
     bgImage = loadImage("powerman2.png");
     hullStateImage = loadImage("hulldamageoverlay.png");
     reactorFailOverlay = loadImage("reactorFailOverlay.png");
+    fireSprite = new Sprite(loadImage("anims/fire.png"), 200,200,4,4);
+    fireSprite.frameSpeed = 2;
+    
     for (int i = 0; i < 4; i++) {
       power[i] = 2;
     }
@@ -261,6 +265,8 @@ public class PowerDisplay implements Display {
     text((int)jumpCharge  + "%", 652, 714);
 
 
+    fireSprite.update();  //update the fire animation
+
     //draw the subssystem icons
     int baseX = 625;
     int baseY = 85; 
@@ -271,6 +277,10 @@ public class PowerDisplay implements Display {
         s.doRepairs();
       }
       s.draw();
+      if(s.isBroken()){
+        noTint();
+        fireSprite.draw((int)s.pos.x, (int)s.pos.y, (int)s.size.x, (int)s.size.y);
+      }
       //draw the instruction list in the top right
       //ignoring failed items that are now broken
       textFont(font, 12);  
@@ -535,6 +545,7 @@ public abstract class SubSystem {
     img = p;
     this.name = name;
     this.pos = pos;
+    this.size = new PVector(p.width, p.height);
   }
 
   public void setDifficulty(int i) {
