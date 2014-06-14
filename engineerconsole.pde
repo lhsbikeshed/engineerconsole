@@ -113,6 +113,7 @@ void setup() {
   displayMap.put("RemoteConnection", new RemoteConnectionDisplay());
   displayMap.put("pwned", new PwnedDisplay());
   displayMap.put("wormholeStatus", wormholeDisplay );
+  displayMap.put("cablepuzzle", new CablePuzzleDisplay());
 
   currentScreen = displayMap.get("power");
 
