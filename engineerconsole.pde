@@ -503,9 +503,8 @@ void oscEvent(OscMessage theOscMessage) {
       println("fuel leak stopped");
       if (serialEnabled) {
 
-        panelPort.write('F');
-        char c = 128;
-        panelPort.write(c);
+        panelPort.write('X');
+       
       }
     }
 
