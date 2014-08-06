@@ -65,7 +65,7 @@ public class AirlockDisplay implements Display {
     for (int i = 0; i < 5; i++) { 
       codeAttempt[i] = 0;
     }
-    doorCode = possibleAuthCodes[(int)random(3)];
+    doorCode = possibleAuthCodes[0];
     
   }
   public void stop() {
