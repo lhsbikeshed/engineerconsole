@@ -8,7 +8,7 @@ public class PowerDisplay implements Display {
   //NetAddress  myRemoteLocation;
 
   //assets
-  PImage bgImage, hullStateImage, reactorFailOverlay;
+  PImage bgImage, hullStateImage, reactorFailOverlay, fuelLeakImage;
 
   //logic thingies
   int[] power = new int[4];
@@ -43,6 +43,7 @@ public class PowerDisplay implements Display {
     bgImage = loadImage("powerman2.png");
     hullStateImage = loadImage("hulldamageoverlay.png");
     reactorFailOverlay = loadImage("reactorFailOverlay.png");
+    fuelLeakImage = loadImage("leakIcon.png");
     fireSprite = new Sprite(loadImage("anims/fire2.png"), 150,122,2,1);
     fireSprite.frameSpeed = 20;
     fireSprite.xCentre = 75;
@@ -245,7 +246,7 @@ public class PowerDisplay implements Display {
 
     //draw hull damage
     tint( (int)map(hullState, 0, 100, 255, 0), (int)map(hullState, 0, 100, 0, 255), 0);
-    image(hullStateImage, 29, 568);
+    image(hullStateImage, 259, 632);
     noTint();
 
     //power assignment bars
@@ -258,14 +259,19 @@ public class PowerDisplay implements Display {
 
     //bits o text
     textFont(font, 15);
-    text((int)hullState  + "%", 178, 750);
+    text((int)hullState  + "%", 350, 741);
     textFont(font, 12);
     fill( (int)map(oxygenLevel, 0, 100, 255, 0), (int)map(oxygenLevel, 0, 100, 0, 255), 0);  
-    text((int)oxygenLevel  + "%", 692, 662);
+    text((int)oxygenLevel  + "%", 211, 652);
 
-    fill( (int)map(jumpCharge, 0, 100, 255, 0), (int)map(jumpCharge, 0, 100, 0, 255), 0);    
-    text((int)jumpCharge  + "%", 652, 714);
-
+    if(shipState.fuelLeaking){
+      if(globalBlinker){
+        tint(255,0,0);
+      } else {
+        noTint();
+      }
+      image(fuelLeakImage, 390, 635);
+    }
 
     fireSprite.update();  //update the fire animation
 

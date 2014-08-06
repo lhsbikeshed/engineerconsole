@@ -71,6 +71,8 @@ long blinkTime = 0;
 
 long sillinessStartTime = 0;
 
+int fuelBeepTimer = 0;
+
 void setup() {
 
   if (testMode) {
@@ -197,6 +199,14 @@ void draw() {
 
 
           highlightList.remove(h);
+        }
+      }
+
+      if (shipState.fuelLeaking) {
+        fuelBeepTimer--;
+        if (fuelBeepTimer <= 0) {
+          fuelBeepTimer = 50;
+          consoleAudio.playClip("lowFuelBeep");
         }
       }
     } 
@@ -385,235 +395,240 @@ void dealWithSerial(String vals) {
       }
     }
   }
+}
+//send a reset to all attached devices
+void resetDevices() {
+  if (!serialEnabled) {
+    return;
+  }
+  serialPort.write('r');
+}
 
-  //send a reset to all attached devices
-  void resetDevices() {
-    if (!serialEnabled) {
-      return;
+
+/* switch to a new display */
+void changeDisplay(Display d) {
+  currentScreen.stop();
+  currentScreen = d;
+  currentScreen.start();
+}
+
+/* send a probe to engineer arduino panel to get the current state */
+void probeEngPanel() {
+  if (serialEnabled) {
+    println("probng");
+    panelPort.write('P');
+    //mute the random beeps in console audio and only unmute when reeiving a probe complete message
+    consoleAudio.muteBeeps = true;
+  }
+}
+
+void oscEvent(OscMessage theOscMessage) {
+  // println(theOscMessage);
+  if (theOscMessage.checkAddrPattern("/system/reactor/stateUpdate")==true) {
+    int state = theOscMessage.get(0).intValue();
+    String flags = theOscMessage.get(1).stringValue();
+    String[] fList = flags.split(";");
+    //reset flags
+    bootDisplay.brokenBoot = false;
+    for (String f : fList) {
+      if (f.equals("BROKENBOOT")) {
+        println("BROKEN BOOT");
+        bootDisplay.brokenBoot = true;
+      }
     }
-    serialPort.write('r');
-  }
 
-
-  /* switch to a new display */
-  void changeDisplay(Display d) {
-    currentScreen.stop();
-    currentScreen = d;
-    currentScreen.start();
-  }
-
-  /* send a probe to engineer arduino panel to get the current state */
-  void probeEngPanel() {
-    if (serialEnabled) {
-      println("probng");
-      panelPort.write('P');
-      //mute the random beeps in console audio and only unmute when reeiving a probe complete message
-      consoleAudio.muteBeeps = true;
-    }
-  }
-
-  void oscEvent(OscMessage theOscMessage) {
-    // println(theOscMessage);
-    if (theOscMessage.checkAddrPattern("/system/reactor/stateUpdate")==true) {
-      int state = theOscMessage.get(0).intValue();
-      String flags = theOscMessage.get(1).stringValue();
-      String[] fList = flags.split(";");
-      //reset flags
-      bootDisplay.brokenBoot = false;
-      for (String f : fList) {
-        if (f.equals("BROKENBOOT")) {
-          println("BROKEN BOOT");
-          bootDisplay.brokenBoot = true;
-        }
-      }
-
-      if (state == 0) {
-        shipState.poweredOn = false;
-        shipState.poweringOn = false;
-        bootDisplay.stop();
-        bannerSystem.cancel();
-        resetDevices();
-      } 
-      else {
-
-
-        if (!shipState.poweredOn ) {
-          shipState.poweringOn = true;
-          changeDisplay(bootDisplay);
-        }
-      }
-      currentScreen.oscMessage(theOscMessage);
-    } 
-    else if (theOscMessage.checkAddrPattern("/scene/youaredead") == true) {
-      //oh noes we died
-      shipState.areWeDead = true;
-      shipState.deathText = theOscMessage.get(0).stringValue();
-      deathTime = millis();
-      if (serialEnabled) {
-        serialPort.write('k');
-      }
-    } 
-    else if (theOscMessage.checkAddrPattern("/game/reset") == true) {
-      //reset the entire game
-      if (serialEnabled) {
-        serialPort.write('r');
-        panelPort.write('R');
-      }
-      changeDisplay(displayMap.get("power"));
+    if (state == 0) {
       shipState.poweredOn = false;
       shipState.poweringOn = false;
-      shipState.areWeDead = false;
-      bootDisplay.stop();  
-      println("reset");
-      shipState.sillinessLevel = 0;
-    } 
-    else if (theOscMessage.checkAddrPattern("/engineer/powerState") == true) {
-
-      if (theOscMessage.get(0).intValue() == 1) {
-        shipState.poweredOn = true;
-        shipState.poweringOn = false;
-        bootDisplay.stop();
-      } 
-      else {
-        shipState.poweredOn = false;
-        shipState.poweringOn = false;
-      }
-    } 
-    else if (theOscMessage.checkAddrPattern("/ship/effect/heartbeat") == true) {
-      heartBeatTimer = millis();
-    } 
-    else if (theOscMessage.checkAddrPattern("/ship/damage")==true) {
-
-      damageEffects.startEffect(1000);
-      if (currentScreen == powerDisplay) {
-        powerDisplay.oscMessage(theOscMessage);
-      }
-    } 
-    else if ( theOscMessage.checkAddrPattern("/clientscreen/EngineerStation/changeTo") ) {
-      if (!shipState.poweredOn) { 
-        return;
-      }
-      String changeTo = theOscMessage.get(0).stringValue();
-      try {
-        Display d = displayMap.get(changeTo);
-        println("found display for : " + changeTo);
-        changeDisplay(d);
-      } 
-      catch(Exception e) {
-        println("no display found for " + changeTo);
-        e.printStackTrace();
-        changeDisplay(displayMap.get("power"));
-      }
-    } 
-    else if (theOscMessage.checkAddrPattern("/clientscreen/showBanner") ) {
-      String title = theOscMessage.get(0).stringValue();
-      String text = theOscMessage.get(1).stringValue();
-      int duration = theOscMessage.get(2).intValue();
-
-      bannerSystem.setSize(700, 300);
-      bannerSystem.setTitle(title);
-      bannerSystem.setText(text);
-      bannerSystem.displayFor(duration);
-    } 
-    else if (theOscMessage.checkAddrPattern("/system/boot/diskNumbers") ) {
-
-      int[] disks = { 
-        theOscMessage.get(0).intValue(), theOscMessage.get(1).intValue(), theOscMessage.get(2).intValue()
-        };
-        println(disks);
-      bootDisplay.setDisks(disks);
-    } 
-    else if (theOscMessage.checkAddrPattern("/system/fuelLeakState")) {
-      boolean state = theOscMessage.get(0).intValue() == 1 ? true : false;
-      if (state) {
-        println("fuel leak started");
-        if (serialEnabled) {
-
-          panelPort.write('F');
-          char c = 50;
-          panelPort.write(c);
-        }
-      } 
-      else {
-        println("fuel leak stopped");
-        if (serialEnabled) {
-
-          panelPort.write('F');
-          char c = 128;
-          panelPort.write(c);
-        }
-      }
-
-      /* ---------next section is for routing general display messages to their right screens */
-    } 
-    else if (theOscMessage.addrPattern().startsWith("/system/powerManagement")) {
-      powerDisplay.oscMessage(theOscMessage);
-    } 
-    else if (theOscMessage.addrPattern().startsWith("/engineer/wormholeStatus/")) {
-
-      wormholeDisplay.oscMessage(theOscMessage);
-    } 
-    else if (theOscMessage.addrPattern().startsWith("/system/jammer/")) {
-
-      jamDisplay.oscMessage(theOscMessage);
+      bootDisplay.stop();
+      bannerSystem.cancel();
+      resetDevices();
     } 
     else {
 
-      currentScreen.oscMessage(theOscMessage);
+
+      if (!shipState.poweredOn ) {
+        shipState.poweringOn = true;
+        changeDisplay(bootDisplay);
+      }
     }
-  }
+    currentScreen.oscMessage(theOscMessage);
+  } 
+  else if (theOscMessage.checkAddrPattern("/scene/youaredead") == true) {
+    //oh noes we died
+    shipState.areWeDead = true;
+    shipState.deathText = theOscMessage.get(0).stringValue();
+    deathTime = millis();
+    if (serialEnabled) {
+      serialPort.write('k');
+    }
+  } 
+  else if (theOscMessage.checkAddrPattern("/game/reset") == true) {
+    //reset the entire game
+    if (serialEnabled) {
+      serialPort.write('r');
+      panelPort.write('R');
+    }
+    changeDisplay(displayMap.get("power"));
+    shipState.poweredOn = false;
+    shipState.poweringOn = false;
+    shipState.areWeDead = false;
+    bootDisplay.stop();  
+    println("reset");
+    shipState.sillinessLevel = 0;
+  } 
+  else if (theOscMessage.checkAddrPattern("/engineer/powerState") == true) {
 
-  void addHighlight(Highlighter h) {
-    highlightList.add(h);
-  }
+    if (theOscMessage.get(0).intValue() == 1) {
+      shipState.poweredOn = true;
+      shipState.poweringOn = false;
+      bootDisplay.stop();
+    } 
+    else {
+      shipState.poweredOn = false;
+      shipState.poweringOn = false;
+    }
+  } 
+  else if (theOscMessage.checkAddrPattern("/ship/effect/heartbeat") == true) {
+    heartBeatTimer = millis();
+  } 
+  else if (theOscMessage.checkAddrPattern("/ship/damage")==true) {
 
-  void mouseClicked() {
-    //println(mouseX + ":" + mouseY);
+    damageEffects.startEffect(1000);
     if (currentScreen == powerDisplay) {
-      ((PowerDisplay)currentScreen).mouseClick(mouseX, mouseY);
+      powerDisplay.oscMessage(theOscMessage);
     }
-  }
-
-
-  void hideCursor() {
-    BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-    Cursor blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(
-    cursorImg, new Point(0, 0), "blank cursor");
-    frame.setCursor(blankCursor);
-  }
-  public class ShipState {
-
-    public int smartBombsLeft = 6;
-    public boolean poweredOn = true;
-    public boolean poweringOn = false ;
-    public boolean areWeDead = false;
-    public String deathText = "";
-
-    public PVector shipPos = new PVector(0, 0, 0);
-    public PVector shipRot = new PVector(0, 0, 0);
-    public PVector shipVel = new PVector(0, 0, 0);
-
-    public int sillinessLevel = 0;
-    public boolean sillinessInProgress = false;
-    public int[] powerLevels;
-
-    public ShipState() {
-    };
-
-    public void resetState() {
+  } 
+  else if ( theOscMessage.checkAddrPattern("/clientscreen/EngineerStation/changeTo") ) {
+    if (!shipState.poweredOn) { 
+      return;
     }
+    String changeTo = theOscMessage.get(0).stringValue();
+    try {
+      Display d = displayMap.get(changeTo);
+      println("found display for : " + changeTo);
+      changeDisplay(d);
+    } 
+    catch(Exception e) {
+      println("no display found for " + changeTo);
+      e.printStackTrace();
+      changeDisplay(displayMap.get("power"));
+    }
+  } 
+  else if (theOscMessage.checkAddrPattern("/clientscreen/showBanner") ) {
+    String title = theOscMessage.get(0).stringValue();
+    String text = theOscMessage.get(1).stringValue();
+    int duration = theOscMessage.get(2).intValue();
+
+    bannerSystem.setSize(700, 300);
+    bannerSystem.setTitle(title);
+    bannerSystem.setText(text);
+    bannerSystem.displayFor(duration);
+  } 
+  else if (theOscMessage.checkAddrPattern("/system/boot/diskNumbers") ) {
+
+    int[] disks = { 
+      theOscMessage.get(0).intValue(), theOscMessage.get(1).intValue(), theOscMessage.get(2).intValue()
+      };
+      println(disks);
+    bootDisplay.setDisks(disks);
+  } 
+  else if (theOscMessage.checkAddrPattern("/system/fuelLeakState")) {
+    boolean state = theOscMessage.get(0).intValue() == 1 ? true : false;
+    if (state) {
+      println("fuel leak started");
+      shipState.fuelLeaking = true;
+      if (serialEnabled) {
+
+        panelPort.write('F');
+        char c = 50;
+        panelPort.write(c);
+      }
+    } 
+    else {
+      println("fuel leak stopped");
+      shipState.fuelLeaking = false;
+      if (serialEnabled) {
+
+        panelPort.write('F');
+        char c = 128;
+        panelPort.write(c);
+      }
+    }
+
+    /* ---------next section is for routing general display messages to their right screens */
+  } 
+  else if (theOscMessage.addrPattern().startsWith("/system/powerManagement")) {
+    powerDisplay.oscMessage(theOscMessage);
+  } 
+  else if (theOscMessage.addrPattern().startsWith("/engineer/wormholeStatus/")) {
+
+    wormholeDisplay.oscMessage(theOscMessage);
+  } 
+  else if (theOscMessage.addrPattern().startsWith("/system/jammer/")) {
+
+    jamDisplay.oscMessage(theOscMessage);
+  } 
+  else {
+
+    currentScreen.oscMessage(theOscMessage);
   }
+}
 
+void addHighlight(Highlighter h) {
+  highlightList.add(h);
+}
 
-  public interface Display {
-
-    public void draw();
-    public void oscMessage(OscMessage theOscMessage);
-    public void start();
-    public void stop();
-
-    public void keyPressed();
-    public void keyReleased();
-    public void serialEvent(String evt);
+void mouseClicked() {
+  //println(mouseX + ":" + mouseY);
+  if (currentScreen == powerDisplay) {
+    ((PowerDisplay)currentScreen).mouseClick(mouseX, mouseY);
   }
+}
+
+
+void hideCursor() {
+  BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+  Cursor blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(
+  cursorImg, new Point(0, 0), "blank cursor");
+  frame.setCursor(blankCursor);
+}
+public class ShipState {
+
+  public int smartBombsLeft = 6;
+  public boolean poweredOn = true;
+  public boolean poweringOn = false ;
+  public boolean areWeDead = false;
+  public String deathText = "";
+
+  public PVector shipPos = new PVector(0, 0, 0);
+  public PVector shipRot = new PVector(0, 0, 0);
+  public PVector shipVel = new PVector(0, 0, 0);
+
+  public int sillinessLevel = 0;
+  public boolean sillinessInProgress = false;
+  public int[] powerLevels;
+
+  public boolean fuelLeaking = false;
+
+
+  public ShipState() {
+  };
+
+  public void resetState() {
+  }
+}
+
+
+public interface Display {
+
+  public void draw();
+  public void oscMessage(OscMessage theOscMessage);
+  public void start();
+  public void stop();
+
+  public void keyPressed();
+  public void keyReleased();
+  public void serialEvent(String evt);
+}
 
