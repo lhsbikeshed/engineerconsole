@@ -550,9 +550,8 @@ void oscEvent(OscMessage theOscMessage) {
       shipState.fuelLeaking = false;
       if (serialEnabled) {
 
-        panelPort.write('F');
-        char c = 128;
-        panelPort.write(c);
+        panelPort.write('X');
+        
       }
     }
 
