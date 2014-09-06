@@ -116,7 +116,7 @@ void setup() {
   displayMap.put("pwned", new PwnedDisplay());
   displayMap.put("wormholeStatus", wormholeDisplay );
   displayMap.put("cablepuzzle", new CablePuzzleDisplay());
-
+  displayMap.put("failureScreen", new FailureScreen());
   currentScreen = displayMap.get("power");
 
 
