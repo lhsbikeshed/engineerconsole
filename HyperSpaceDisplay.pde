@@ -66,8 +66,7 @@ public class HyperSpaceDisplay implements Display {
           e.keyChar = charMap[idCt];
           emitters[idCt] = e;
           idCt++;
-        } 
-        else {
+        } else {
           if (x == 0 || x ==3) {
             Emitter e = new Emitter();
             e.pos = new PVector(334 + x * 67 + x * 29, 220 + y * 67 + y *27);
@@ -91,8 +90,8 @@ public class HyperSpaceDisplay implements Display {
     }
     keypressesSinceFuckUp = 0;
   }
-  
-  
+
+
   public void stop() {
   }
 
@@ -100,19 +99,18 @@ public class HyperSpaceDisplay implements Display {
     image(bgImage, 0, 0, width, height);
     if (haveFailed) {
       image(overlayImage, 40, 200);
-    } 
-    else {
+    } else {
       fill(255, 255, 0);
       textFont(font, 22);
       if (timeRemaining >0.0f) {
 
         text("Time Remaining: " + timeRemaining, 294, 700);
-      } 
-      else {
+      } else {
         text("EXITING HYPERSPACE", 294, 700);
       }
-
-      text("Hyperspace Tunnel Health: " + (failsRemaining * 20) + "%", 149, 740);
+      int h = (failsRemaining * 20);
+      if (h < 0) h = 0;
+      text("Hyperspace Tunnel Health: " + h + "%", 149, 740);
 
 
       if (lastFailTime + nextFailTime < millis()) {
@@ -127,10 +125,10 @@ public class HyperSpaceDisplay implements Display {
           deadCount ++;
         }
         e.draw();
-        if(e.getState() == Emitter.STATE_OK){
-          stroke(15,15,255);
+        if (e.getState() == Emitter.STATE_OK) {
+          stroke(15, 15, 255);
           strokeWeight(4);
-          line(515,437, e.pos.x + 35, e.pos.y + 35);
+          line(515, 437, e.pos.x + 35, e.pos.y + 35);
         }
       }
 
@@ -140,7 +138,7 @@ public class HyperSpaceDisplay implements Display {
           b.state = Emitter.STATE_OFF;
         }
       } 
-      if (deadCount >=3){
+      if (deadCount >=3) {
         image(warningBanner, 30, 218);
       }
     }
@@ -151,8 +149,7 @@ public class HyperSpaceDisplay implements Display {
     if (theOscMessage.checkAddrPattern("/scene/warp/updatestats")==true) {
       timeRemaining = (int)theOscMessage.get(1).floatValue();
       failsRemaining = (int)theOscMessage.get(0).floatValue();
-    }
-    else if (theOscMessage.checkAddrPattern("/scene/warp/failjump") == true) {
+    } else if (theOscMessage.checkAddrPattern("/scene/warp/failjump") == true) {
       haveFailed = true;
       failStart = millis();
       failDelay = theOscMessage.get(0).intValue() * 1000;
@@ -167,7 +164,7 @@ public class HyperSpaceDisplay implements Display {
   private void sendFailMessage() {
     OscMessage myMessage = new OscMessage("/scene/warp/warpfail");
     p5.flush(myMessage, myRemoteLocation);
-    
+
     keypressesSinceFuckUp = 0;
   }
 
@@ -190,8 +187,7 @@ public class HyperSpaceDisplay implements Display {
               if (keypressesSinceFuckUp > 5) {
                 keypressesSinceFuckUp = 5;
               }
-            } 
-            else {
+            } else {
               for (Emitter b : emitters) {
                 b.state = Emitter.STATE_OFF;
               }
@@ -211,25 +207,25 @@ public class HyperSpaceDisplay implements Display {
     PVector size;
     public int id = 0;
     public char keyChar;
-    
+
     public static final int STATE_OFF = 0;
     public static final int STATE_FAIL = 1;
     public static final int STATE_WRONG = 2;
     public static final int STATE_OK = 3;
     private long timerStart = 0;
     private int state = STATE_OFF;
-    
-    public void setState(int state){
+
+    public void setState(int state) {
       this.state = state;
-      if(state == STATE_WRONG || state == STATE_OK){
+      if (state == STATE_WRONG || state == STATE_OK) {
         timerStart = millis();
       }
     }
-    
-    public int getState(){
+
+    public int getState() {
       return state;
     }
-    
+
     public Emitter() {
     }
 
@@ -238,24 +234,23 @@ public class HyperSpaceDisplay implements Display {
       if (state == STATE_FAIL) {
         if (globalBlinker) {
           fill(0, 0, 255, 150);
-        } 
-        else {
+        } else {
           fill(0, 0, 128, 150);
         }
         rect(pos.x, pos.y, size.x, size.y);
       } else if (state == STATE_WRONG) {
-      
+
         fill(255, 0, 0, 150);
-       
-        if(timerStart + 750 < millis()){
+
+        if (timerStart + 750 < millis()) {
           state = STATE_OFF;
         }
         rect(pos.x, pos.y, size.x, size.y);
       } else if (state == STATE_OK) {
-      
+
         fill(0, 255, 0, 150);
-       
-        if(timerStart + 750 < millis()){
+
+        if (timerStart + 750 < millis()) {
           state = STATE_OFF;
         }
         rect(pos.x, pos.y, size.x, size.y);
@@ -263,5 +258,4 @@ public class HyperSpaceDisplay implements Display {
     }
   }
 }
-
 
