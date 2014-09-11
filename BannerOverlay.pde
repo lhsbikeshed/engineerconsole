@@ -18,8 +18,8 @@ public class BannerOverlay {
   private int iconIndex = 0;
   private PImage[] icons = new PImage[1];
 
-  //String pathBase = "C:/Users/tom/Dropbox/starship/engineerconsole/data/";    //TESTING
- String pathBase = "c:/game/dev/engineerconsole/data/";    //LIVE
+  String pathBase = "C:/Users/tom/Dropbox/starship/engineerconsole/data/";    //TESTING
+ //String pathBase = "c:/game/dev/engineerconsole/data/";    //LIVE
 
   public BannerOverlay () {
     cornerImg = loadImage(pathBase + "corner.png");
