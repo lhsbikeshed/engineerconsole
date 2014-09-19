@@ -117,6 +117,8 @@ void setup() {
   displayMap.put("wormholeStatus", wormholeDisplay );
   displayMap.put("cablepuzzle", new CablePuzzleDisplay());
   displayMap.put("failureScreen", new FailureScreen());
+  displayMap.put("restrictedArea", new RestrictedAreaScreen());
+
   currentScreen = displayMap.get("power");
 
 
